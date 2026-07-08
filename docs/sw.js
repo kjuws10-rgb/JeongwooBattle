@@ -1,4 +1,4 @@
-const CACHE_NAME = "jeongwoo-battle-v1";
+const CACHE_NAME = "jeongwoo-battle-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -28,4 +28,3 @@ self.addEventListener("fetch", (event) => {
     )
   );
 });
-
