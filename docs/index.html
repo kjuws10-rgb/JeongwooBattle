@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#111827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="정우배틀">
+  <title>정우배틀</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="game-shell">
+    <canvas id="gameCanvas" width="900" height="1500" aria-label="정우배틀 게임 화면"></canvas>
+
+    <section class="hud" aria-live="polite">
+      <div>
+        <span class="label">Score</span>
+        <strong id="score">0</strong>
+      </div>
+      <div>
+        <span class="label">Wave</span>
+        <strong id="wave">1</strong>
+      </div>
+      <div>
+        <span class="label">Power</span>
+        <strong id="power">1</strong>
+      </div>
+    </section>
+
+    <section class="health">
+      <div id="healthBar"></div>
+    </section>
+
+    <button id="restartButton" class="restart" type="button" hidden>Restart</button>
+
+    <div id="moveStick" class="stick" aria-label="Move joystick">
+      <div id="moveKnob"></div>
+    </div>
+    <button id="shootButton" class="shoot" type="button" aria-label="Shoot">●</button>
+  </main>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
+
