@@ -93,8 +93,48 @@ const maps = [
       { x: 610, y: 820, w: 170, h: 170 },
       { x: 350, y: 1190, w: 200, h: 120 }
     ]
+  },
+  {
+    name: "Nebula",
+    minScore: 1500,
+    bg: "#581c87",
+    grid: "rgba(245,208,254,0.16)",
+    block: "#701a75",
+    edge: "#f0abfc",
+    obstacles: [
+      { x: 80, y: 230, w: 220, h: 70 },
+      { x: 610, y: 250, w: 170, h: 180 },
+      { x: 280, y: 520, w: 330, h: 70 },
+      { x: 90, y: 820, w: 160, h: 220 },
+      { x: 640, y: 880, w: 170, h: 200 },
+      { x: 310, y: 1210, w: 280, h: 80 }
+    ]
+  },
+  {
+    name: "Core",
+    minScore: 2200,
+    bg: "#7f1d1d",
+    grid: "rgba(254,202,202,0.15)",
+    block: "#450a0a",
+    edge: "#fca5a5",
+    obstacles: [
+      { x: 120, y: 220, w: 130, h: 240 },
+      { x: 640, y: 220, w: 130, h: 240 },
+      { x: 330, y: 500, w: 240, h: 90 },
+      { x: 130, y: 780, w: 250, h: 80 },
+      { x: 520, y: 930, w: 250, h: 80 },
+      { x: 350, y: 1190, w: 200, h: 180 }
+    ]
   }
 ];
+
+const enemyTypes = {
+  chaser: { label: "Chaser", radius: 28, health: 3, speed: 122, color: "#a855f7", stop: 76, score: 10 },
+  sprinter: { label: "Sprinter", radius: 22, health: 2, speed: 208, color: "#f97316", stop: 88, score: 12 },
+  brute: { label: "Brute", radius: 36, health: 7, speed: 84, color: "#ef4444", stop: 92, score: 18 },
+  shooter: { label: "Shooter", radius: 25, health: 4, speed: 96, color: "#06b6d4", stop: 260, score: 16, shoots: true },
+  orbit: { label: "Orbit", radius: 24, health: 3, speed: 132, color: "#eab308", stop: 132, score: 14, orbit: true }
+};
 
 let lastTime = 0;
 let spawnTimer = 0;
@@ -110,6 +150,9 @@ let records = [];
 let scoreSaved = false;
 let visualTier = 1;
 let dynamicObjects = [];
+let unlockedMapIndex = 0;
+let bossTargetMapIndex = null;
+let bossActive = false;
 
 const player = {
   x: world.width / 2,
@@ -128,6 +171,7 @@ const player = {
 };
 
 let bullets = [];
+let enemyBullets = [];
 let enemies = [];
 let cubes = [];
 let items = [];
@@ -161,6 +205,7 @@ function resetRoundState() {
   player.terrainCooldown = 0;
   player.boostTime = 0;
   bullets = [];
+  enemyBullets = [];
   enemies = [];
   cubes = [];
   items = [];
@@ -171,6 +216,9 @@ function resetRoundState() {
   bulletTimer = 0;
   itemTimer = 4;
   currentMapIndex = 0;
+  unlockedMapIndex = 0;
+  bossTargetMapIndex = null;
+  bossActive = false;
   scoreSaved = false;
   visualTier = 1;
   gameOver = false;
@@ -200,7 +248,7 @@ function startGame() {
 
 function updateHud() {
   scoreEl.textContent = score;
-  waveEl.textContent = `${currentMap().name} L${playerTier()}`;
+  waveEl.textContent = bossActive ? `Boss -> ${maps[bossTargetMapIndex].name}` : `${currentMap().name} L${playerTier()}`;
   powerEl.textContent = `P${player.power} M${player.missiles} S${Math.ceil(player.shieldTime)}`;
   healthBar.style.width = `${Math.max(0, (player.health / player.maxHealth) * 100)}%`;
 }
@@ -222,7 +270,7 @@ function currentObstacles() {
 }
 
 function playerTier() {
-  return clamp(1 + Math.floor(score / 250), 1, 5);
+  return clamp(1 + Math.floor(score / 250), 1, 7);
 }
 
 function rebuildDynamicTerrain() {
@@ -310,19 +358,6 @@ function updateTerrainEffects(dt) {
 }
 
 function updateMapByScore() {
-  let nextIndex = 0;
-
-  maps.forEach((map, index) => {
-    if (score >= map.minScore) nextIndex = index;
-  });
-
-  if (nextIndex !== currentMapIndex) {
-    currentMapIndex = nextIndex;
-    rebuildDynamicTerrain();
-    addParticles(player.x, player.y, currentMap().edge, 34);
-    playTone(330 + nextIndex * 90, 0.25, "triangle", 0.075);
-  }
-
   const nextTier = playerTier();
   if (nextTier > visualTier) {
     visualTier = nextTier;
@@ -330,6 +365,53 @@ function updateMapByScore() {
     addParticles(player.x, player.y, units[selectedUnit].shot, 42);
     playTone(520 + nextTier * 70, 0.18, "triangle", 0.08);
   }
+
+  const nextMapIndex = unlockedMapIndex + 1;
+  if (!bossActive && nextMapIndex < maps.length && score >= maps[nextMapIndex].minScore) {
+    spawnBoss(nextMapIndex);
+  }
+}
+
+function spawnBoss(targetMapIndex) {
+  bossActive = true;
+  bossTargetMapIndex = targetMapIndex;
+  enemies = enemies.filter((enemy) => enemy.boss);
+  enemyBullets = [];
+  const targetMap = maps[targetMapIndex];
+  enemies.push({
+    type: "boss",
+    boss: true,
+    x: world.width / 2,
+    y: arenaTop + 170,
+    radius: 58 + targetMapIndex * 4,
+    health: 38 + targetMapIndex * 16,
+    maxHealth: 38 + targetMapIndex * 16,
+    speed: 72 + targetMapIndex * 5,
+    color: targetMap.edge,
+    stopDistance: 210,
+    scoreValue: 80 + targetMapIndex * 35,
+    shootCooldown: 1.2,
+    pulse: 0
+  });
+  addParticles(world.width / 2, arenaTop + 170, targetMap.edge, 64);
+  playTone(120, 0.24, "sawtooth", 0.1);
+  window.setTimeout(() => playTone(220, 0.22, "sawtooth", 0.09), 180);
+  updateHud();
+}
+
+function clearBoss(enemy) {
+  if (!enemy.boss || bossTargetMapIndex == null) return;
+
+  unlockedMapIndex = bossTargetMapIndex;
+  currentMapIndex = unlockedMapIndex;
+  bossTargetMapIndex = null;
+  bossActive = false;
+  enemyBullets = [];
+  rebuildDynamicTerrain();
+  addParticles(player.x, player.y, currentMap().edge, 76);
+  playTone(392, 0.14, "triangle", 0.085);
+  window.setTimeout(() => playTone(523.25, 0.16, "triangle", 0.085), 130);
+  window.setTimeout(() => updateMapByScore(), 220);
 }
 
 function loadRecords() {
@@ -442,6 +524,8 @@ function bulletHitsObstacle(bullet) {
 }
 
 function spawnEnemy() {
+  if (bossActive && enemies.some((enemy) => enemy.boss) && Math.random() < 0.55) return;
+
   const side = Math.floor(Math.random() * 4);
   const margin = 80;
   let x = Math.random() * world.width;
@@ -452,14 +536,97 @@ function spawnEnemy() {
   if (side === 2) y = world.height + margin;
   if (side === 3) x = -margin;
 
-  const fast = Math.random() < Math.min(0.35, wave * 0.035);
+  const type = chooseEnemyType();
+  const spec = enemyTypes[type];
+  const levelBonus = Math.floor(wave / 3);
   enemies.push({
+    type,
     x,
     y,
-    radius: fast ? 22 : 28,
-    health: fast ? 2 + Math.floor(wave / 3) : 3 + Math.floor(wave / 2),
-    speed: fast ? 178 + wave * 7 : 112 + wave * 5,
-    color: fast ? "#f97316" : "#a855f7"
+    radius: spec.radius,
+    health: spec.health + levelBonus,
+    maxHealth: spec.health + levelBonus,
+    speed: spec.speed + wave * 4,
+    color: spec.color,
+    stopDistance: spec.stop,
+    scoreValue: spec.score,
+    shootCooldown: 0.9 + Math.random() * 0.8,
+    orbitDir: Math.random() < 0.5 ? -1 : 1
+  });
+}
+
+function chooseEnemyType() {
+  const options = ["chaser"];
+  if (wave >= 2) options.push("sprinter");
+  if (wave >= 3) options.push("brute");
+  if (wave >= 4) options.push("shooter");
+  if (wave >= 5) options.push("orbit");
+  return options[Math.floor(Math.random() * options.length)];
+}
+
+function shootEnemyBullet(enemy, angle, speed = 340, radius = 8, damage = 9) {
+  enemyBullets.push({
+    x: enemy.x + Math.cos(angle) * (enemy.radius + 10),
+    y: enemy.y + Math.sin(angle) * (enemy.radius + 10),
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    radius,
+    damage,
+    life: 2.2,
+    color: enemy.boss ? "#fca5a5" : enemy.color
+  });
+}
+
+function updateEnemy(enemy, dt) {
+  const dx = player.x - enemy.x;
+  const dy = player.y - enemy.y;
+  const dist = Math.max(1, Math.hypot(dx, dy));
+  const angle = Math.atan2(dy, dx);
+  const stopDistance = enemy.stopDistance || player.radius + enemy.radius + 22;
+  let moveAngle = angle;
+  let moveSpeed = enemy.speed;
+
+  if (enemy.type === "orbit") {
+    moveAngle = angle + enemy.orbitDir * 0.72;
+    moveSpeed = enemy.speed * (dist > stopDistance + 45 ? 1 : 0.62);
+  }
+
+  if (dist > stopDistance) {
+    enemy.x += Math.cos(moveAngle) * moveSpeed * dt;
+    enemy.y += Math.sin(moveAngle) * moveSpeed * dt;
+  } else if (dist < stopDistance - 12) {
+    const push = Math.min(120 * dt, stopDistance - dist);
+    enemy.x -= Math.cos(angle) * push;
+    enemy.y -= Math.sin(angle) * push;
+  }
+
+  if (enemy.shoots || enemy.type === "shooter" || enemy.boss) {
+    enemy.shootCooldown -= dt;
+    if (enemy.shootCooldown <= 0 && dist < 620) {
+      if (enemy.boss) {
+        for (let i = -1; i <= 1; i += 1) shootEnemyBullet(enemy, angle + i * 0.22, 300 + currentMapIndex * 25, 10, 12);
+        enemy.shootCooldown = Math.max(0.65, 1.25 - currentMapIndex * 0.08);
+      } else {
+        shootEnemyBullet(enemy, angle, 330, 8, 9);
+        enemy.shootCooldown = 1.2 + Math.random() * 0.7;
+      }
+      playTone(enemy.boss ? 180 : 240, 0.06, "square", 0.035);
+    }
+  }
+}
+
+function separateEnemiesFromPlayer() {
+  enemies.forEach((enemy) => {
+    const minDistance = enemy.stopDistance || player.radius + enemy.radius + 20;
+    const dx = enemy.x - player.x;
+    const dy = enemy.y - player.y;
+    const dist = Math.max(1, Math.hypot(dx, dy));
+    if (dist >= minDistance) return;
+
+    const push = minDistance - dist;
+    enemy.x += (dx / dist) * push;
+    enemy.y += (dy / dist) * push;
+    clampToArena(enemy);
   });
 }
 
@@ -676,13 +843,19 @@ function update(dt) {
   });
   bullets = bullets.filter((bullet) => bullet.life > 0 && !bulletHitsObstacle(bullet) && bullet.x > -30 && bullet.x < world.width + 30 && bullet.y > -30 && bullet.y < world.height + 30);
 
+  enemyBullets.forEach((bullet) => {
+    bullet.x += bullet.vx * dt;
+    bullet.y += bullet.vy * dt;
+    bullet.life -= dt;
+  });
+  enemyBullets = enemyBullets.filter((bullet) => bullet.life > 0 && !bulletHitsObstacle(bullet) && bullet.x > -40 && bullet.x < world.width + 40 && bullet.y > arenaTop - 40 && bullet.y < world.height + 40);
+
   enemies.forEach((enemy) => {
-    const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-    enemy.x += Math.cos(angle) * enemy.speed * dt;
-    enemy.y += Math.sin(angle) * enemy.speed * dt;
+    updateEnemy(enemy, dt);
     clampToArena(enemy);
     resolveCircleObstacles(enemy);
   });
+  separateEnemiesFromPlayer();
 
   for (const bullet of bullets) {
     for (const enemy of enemies) {
@@ -704,9 +877,27 @@ function update(dt) {
     }
   }
 
+  enemyBullets.forEach((bullet) => {
+    if (player.invulnerable > 0) return;
+    if (distance(player, bullet) < player.radius + bullet.radius) {
+      bullet.life = 0;
+      if (player.shieldTime > 0) {
+        addParticles(bullet.x, bullet.y, "#93c5fd", 10);
+        playTone(520, 0.08, "sine", 0.05);
+      } else {
+        player.health -= bullet.damage;
+        player.invulnerable = 0.45;
+        addParticles(player.x, player.y, "#ef4444", 14);
+        playTone(160, 0.12, "sawtooth", 0.07);
+        if (player.health <= 0) endGame();
+      }
+    }
+  });
+  enemyBullets = enemyBullets.filter((bullet) => bullet.life > 0);
+
   const defeated = enemies.filter((enemy) => enemy.health <= 0);
   defeated.forEach((enemy) => {
-    score += 10;
+    score += enemy.scoreValue || 10;
     const roll = Math.random();
     if (roll < 0.42) {
       cubes.push({ x: enemy.x, y: enemy.y, radius: 13 });
@@ -717,18 +908,20 @@ function update(dt) {
     }
     addParticles(enemy.x, enemy.y, enemy.color, 12);
     playTone(680, 0.07, "triangle", 0.035);
+    if (enemy.boss) clearBoss(enemy);
   });
   if (defeated.length > 0) updateMapByScore();
   enemies = enemies.filter((enemy) => enemy.health > 0);
 
   enemies.forEach((enemy) => {
-    if (distance(player, enemy) < player.radius + enemy.radius && player.invulnerable <= 0) {
+    const attackDistance = enemy.stopDistance || player.radius + enemy.radius + 18;
+    if (distance(player, enemy) < attackDistance + 8 && player.invulnerable <= 0) {
       if (player.shieldTime > 0) {
-        enemy.health -= 2;
+        enemy.health -= enemy.boss ? 1 : 2;
         addParticles(enemy.x, enemy.y, "#93c5fd", 12);
         playTone(520, 0.08, "sine", 0.05);
       } else {
-        player.health -= 12;
+        player.health -= enemy.boss ? 18 : 10;
         playTone(140, 0.13, "sawtooth", 0.08);
       }
       player.invulnerable = 0.55;
@@ -840,6 +1033,7 @@ function draw() {
   cubes.forEach(drawCube);
   items.forEach(drawItem);
   bullets.forEach(drawBullet);
+  enemyBullets.forEach(drawEnemyBullet);
   enemies.forEach(drawEnemy);
   particles.forEach(drawParticle);
   drawPlayer();
@@ -949,6 +1143,28 @@ function drawBackgroundPattern(map) {
     ctx.fillStyle = "#f8fafc";
     for (let i = 0; i < 64; i += 1) {
       ctx.fillRect((i * 67) % world.width, (i * 149) % world.height, 3, 3);
+    }
+  } else if (map.name === "Nebula") {
+    ctx.strokeStyle = "#f5d0fe";
+    ctx.lineWidth = 4;
+    for (let i = 0; i < 14; i += 1) {
+      const x = 70 + ((i * 181) % 760);
+      const y = 210 + ((i * 137) % 1160);
+      ctx.beginPath();
+      ctx.arc(x, y, 28 + (i % 3) * 12, 0.2, Math.PI * 1.7);
+      ctx.stroke();
+    }
+  } else if (map.name === "Core") {
+    ctx.fillStyle = "#fb7185";
+    for (let i = 0; i < 18; i += 1) {
+      const x = (i * 151) % world.width;
+      const y = arenaTop + ((i * 229) % (world.height - arenaTop));
+      ctx.beginPath();
+      ctx.moveTo(x, y - 24);
+      ctx.lineTo(x + 18, y + 24);
+      ctx.lineTo(x - 18, y + 24);
+      ctx.closePath();
+      ctx.fill();
     }
   } else {
     ctx.fillStyle = "#86efac";
@@ -1076,13 +1292,74 @@ function drawUnitBody() {
 
 function drawEnemy(enemy) {
   ctx.fillStyle = enemy.color;
-  ctx.beginPath();
-  ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.strokeStyle = "#f8fafc";
+  ctx.lineWidth = enemy.boss ? 5 : 3;
+
+  if (enemy.boss) {
+    ctx.save();
+    ctx.translate(enemy.x, enemy.y);
+    ctx.rotate(lastTime / 650);
+    ctx.beginPath();
+    for (let i = 0; i < 8; i += 1) {
+      const angle = (Math.PI * 2 * i) / 8;
+      const radius = i % 2 === 0 ? enemy.radius + 14 : enemy.radius - 4;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#111827";
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius * 0.38, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  } else if (enemy.type === "brute") {
+    ctx.fillRect(enemy.x - enemy.radius, enemy.y - enemy.radius, enemy.radius * 2, enemy.radius * 2);
+    ctx.strokeRect(enemy.x - enemy.radius, enemy.y - enemy.radius, enemy.radius * 2, enemy.radius * 2);
+  } else if (enemy.type === "sprinter") {
+    ctx.beginPath();
+    ctx.moveTo(enemy.x + enemy.radius, enemy.y);
+    ctx.lineTo(enemy.x - enemy.radius * 0.8, enemy.y - enemy.radius);
+    ctx.lineTo(enemy.x - enemy.radius * 0.5, enemy.y);
+    ctx.lineTo(enemy.x - enemy.radius * 0.8, enemy.y + enemy.radius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else if (enemy.type === "shooter") {
+    ctx.beginPath();
+    ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(enemy.x - 6, enemy.y - enemy.radius - 12, 12, 28);
+  } else if (enemy.type === "orbit") {
+    ctx.beginPath();
+    ctx.ellipse(enemy.x, enemy.y, enemy.radius + 6, enemy.radius - 4, lastTime / 500, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   ctx.fillStyle = "#111827";
   ctx.fillRect(enemy.x - enemy.radius, enemy.y - enemy.radius - 12, enemy.radius * 2, 6);
   ctx.fillStyle = "#22c55e";
-  ctx.fillRect(enemy.x - enemy.radius, enemy.y - enemy.radius - 12, enemy.radius * 2 * Math.max(0, enemy.health / 6), 6);
+  ctx.fillRect(enemy.x - enemy.radius, enemy.y - enemy.radius - 12, enemy.radius * 2 * Math.max(0, enemy.health / (enemy.maxHealth || 6)), 6);
+}
+
+function drawEnemyBullet(bullet) {
+  ctx.fillStyle = bullet.color;
+  ctx.strokeStyle = "#fee2e2";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
 }
 
 function drawBullet(bullet) {
