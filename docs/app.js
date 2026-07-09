@@ -1,9 +1,15 @@
 const canvas = document.querySelector("#gameCanvas");
 const ctx = canvas.getContext("2d");
+const gameShell = document.querySelector(".game-shell");
 const scoreEl = document.querySelector("#score");
 const waveEl = document.querySelector("#wave");
 const powerEl = document.querySelector("#power");
 const healthBar = document.querySelector("#healthBar");
+const startPanel = document.querySelector("#startPanel");
+const startButton = document.querySelector("#startButton");
+const gameOverPanel = document.querySelector("#gameOverPanel");
+const finalScore = document.querySelector("#finalScore");
+const saveScoreButton = document.querySelector("#saveScoreButton");
 const restartButton = document.querySelector("#restartButton");
 const moveStick = document.querySelector("#moveStick");
 const moveKnob = document.querySelector("#moveKnob");
@@ -96,6 +102,7 @@ let itemTimer = 4;
 let score = 0;
 let wave = 1;
 let gameOver = false;
+let gameState = "menu";
 let currentMapIndex = 0;
 let selectedUnit = "tank";
 let records = [];
@@ -132,7 +139,7 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-function resetGame() {
+function resetRoundState() {
   selectedUnit = unitSelect.value;
   const unit = units[selectedUnit];
   player.x = world.width / 2;
@@ -159,16 +166,34 @@ function resetGame() {
   currentMapIndex = 0;
   scoreSaved = false;
   gameOver = false;
-  restartButton.hidden = true;
   updateHud();
   renderRecords();
+}
+
+function showStartScreen() {
+  resetRoundState();
+  gameState = "menu";
+  startPanel.hidden = false;
+  gameOverPanel.hidden = true;
+  gameShell.classList.add("is-menu");
+  gameShell.classList.remove("is-ended");
+}
+
+function startGame() {
+  ensureAudio();
+  resetRoundState();
+  gameState = "playing";
+  startPanel.hidden = true;
+  gameOverPanel.hidden = true;
+  gameShell.classList.remove("is-menu", "is-ended");
+  playStartSound();
 }
 
 function updateHud() {
   scoreEl.textContent = score;
   waveEl.textContent = currentMap().name;
   powerEl.textContent = `P${player.power} M${player.missiles} S${Math.ceil(player.shieldTime)}`;
-  healthBar.style.width = `${Math.max(0, player.health)}%`;
+  healthBar.style.width = `${Math.max(0, (player.health / player.maxHealth) * 100)}%`;
 }
 
 function clamp(value, min, max) {
@@ -215,14 +240,27 @@ function saveRecords() {
 
 function renderRecords() {
   scoreList.innerHTML = "";
+  const shownRecords = [...records];
 
-  records.slice(0, 5).forEach((record) => {
+  if (gameState === "ended" && !scoreSaved) {
+    shownRecords.push({
+      name: playerName(),
+      score,
+      unit: units[selectedUnit].label,
+      zone: currentMap().name,
+      pending: true
+    });
+    shownRecords.sort((a, b) => b.score - a.score);
+  }
+
+  shownRecords.slice(0, 8).forEach((record) => {
     const item = document.createElement("li");
     item.textContent = `${record.name} ${record.score} ${record.unit}`;
+    if (record.pending) item.className = "pending-record";
     scoreList.appendChild(item);
   });
 
-  if (records.length === 0) {
+  if (shownRecords.length === 0) {
     const item = document.createElement("li");
     item.textContent = "No records";
     scoreList.appendChild(item);
@@ -235,7 +273,7 @@ function playerName() {
 }
 
 function saveScoreRecord() {
-  if (scoreSaved || score <= 0) return;
+  if (scoreSaved) return;
 
   scoreSaved = true;
   records.push({
@@ -249,6 +287,9 @@ function saveScoreRecord() {
   records = records.slice(0, 8);
   saveRecords();
   renderRecords();
+  saveScoreButton.disabled = true;
+  saveScoreButton.textContent = "Saved";
+  playSaveSound();
 }
 
 function circleRectOverlap(circle, rect) {
@@ -332,6 +373,23 @@ function ensureAudio() {
   startMusic();
 }
 
+function playStartSound() {
+  playTone(261.63, 0.08, "triangle", 0.055);
+  window.setTimeout(() => playTone(329.63, 0.08, "triangle", 0.055), 80);
+  window.setTimeout(() => playTone(392, 0.12, "triangle", 0.06), 160);
+}
+
+function playSaveSound() {
+  playTone(523.25, 0.07, "sine", 0.05);
+  window.setTimeout(() => playTone(659.25, 0.08, "sine", 0.05), 90);
+}
+
+function playGameOverSound() {
+  playTone(196, 0.12, "sawtooth", 0.075);
+  window.setTimeout(() => playTone(146.83, 0.18, "sawtooth", 0.07), 110);
+  window.setTimeout(() => playTone(98, 0.32, "sawtooth", 0.08), 260);
+}
+
 function playTone(frequency, duration = 0.08, type = "square", volume = 0.05) {
   if (!audioContext) return;
 
@@ -352,15 +410,18 @@ function playTone(frequency, duration = 0.08, type = "square", volume = 0.05) {
 function startMusic() {
   if (!audioContext || musicTimer) return;
 
-  const notes = [196, 246.94, 293.66, 246.94, 220, 277.18, 329.63, 277.18];
+  const notes = [196, 246.94, 293.66, 392, 329.63, 277.18, 246.94, 220];
+  const bass = [98, 98, 123.47, 123.47, 110, 110, 146.83, 146.83];
   let step = 0;
 
   musicTimer = window.setInterval(() => {
-    if (!audioContext || audioContext.state === "suspended") return;
+    if (!audioContext || audioContext.state === "suspended" || gameState === "menu") return;
 
     const now = audioContext.currentTime;
     const oscillator = audioContext.createOscillator();
     const gain = audioContext.createGain();
+    const bassOscillator = audioContext.createOscillator();
+    const bassGain = audioContext.createGain();
 
     oscillator.type = "triangle";
     oscillator.frequency.setValueAtTime(notes[step % notes.length], now);
@@ -371,12 +432,25 @@ function startMusic() {
     gain.connect(musicGain);
     oscillator.start(now);
     oscillator.stop(now + 0.34);
+
+    if (step % 2 === 0) {
+      bassOscillator.type = "sine";
+      bassOscillator.frequency.setValueAtTime(bass[step % bass.length], now);
+      bassGain.gain.setValueAtTime(0.001, now);
+      bassGain.gain.linearRampToValueAtTime(0.045, now + 0.03);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+      bassOscillator.connect(bassGain);
+      bassGain.connect(musicGain);
+      bassOscillator.start(now);
+      bassOscillator.stop(now + 0.44);
+    }
+
     step += 1;
   }, 360);
 }
 
 function shoot() {
-  if (bulletTimer > 0 || gameOver) return;
+  if (bulletTimer > 0 || gameState !== "playing" || gameOver) return;
 
   bulletTimer = Math.max(0.1, units[selectedUnit].fireDelay - player.power * 0.018);
   const spread = Math.min(3, Math.floor(player.power / 3));
@@ -451,7 +525,7 @@ function spawnFieldItem() {
 }
 
 function update(dt) {
-  if (gameOver) return;
+  if (gameState !== "playing" || gameOver) return;
 
   const keyboardX = (keys.has("ArrowRight") || keys.has("d") ? 1 : 0) - (keys.has("ArrowLeft") || keys.has("a") ? 1 : 0);
   const keyboardY = (keys.has("ArrowDown") || keys.has("s") ? 1 : 0) - (keys.has("ArrowUp") || keys.has("w") ? 1 : 0);
@@ -603,9 +677,15 @@ function update(dt) {
 
 function endGame() {
   gameOver = true;
-  restartButton.hidden = false;
-  saveScoreRecord();
-  playTone(92, 0.5, "sawtooth", 0.09);
+  gameState = "ended";
+  finalScore.textContent = `Score ${score}`;
+  saveScoreButton.disabled = false;
+  saveScoreButton.textContent = "Save Score";
+  startPanel.hidden = true;
+  gameOverPanel.hidden = false;
+  gameShell.classList.add("is-ended");
+  renderRecords();
+  playGameOverSound();
 }
 
 function worldToScreen() {
@@ -874,6 +954,7 @@ function resetStick() {
 }
 
 moveStick.addEventListener("pointerdown", (event) => {
+  if (gameState !== "playing") return;
   ensureAudio();
   event.preventDefault();
   moveStick.setPointerCapture(event.pointerId);
@@ -896,6 +977,7 @@ moveStick.addEventListener("pointerup", (event) => {
 moveStick.addEventListener("pointercancel", resetStick);
 
 shootButton.addEventListener("pointerdown", (event) => {
+  if (gameState !== "playing") return;
   ensureAudio();
   event.preventDefault();
   shootButton.setPointerCapture(event.pointerId);
@@ -913,26 +995,30 @@ shootButton.addEventListener("pointercancel", () => {
   input.shooting = false;
 });
 
+startButton.addEventListener("click", startGame);
+
+saveScoreButton.addEventListener("click", saveScoreRecord);
+
 restartButton.addEventListener("click", () => {
-  ensureAudio();
-  resetGame();
+  showStartScreen();
 });
 
 unitSelect.addEventListener("change", () => {
-  if (!gameOver && score > 0) {
+  if (gameState === "playing") {
     unitSelect.value = selectedUnit;
     return;
   }
   selectedUnit = unitSelect.value;
-  resetGame();
+  resetRoundState();
 });
 
 playerNameInput.addEventListener("input", () => {
   localStorage.setItem("jeongwoo-battle-player-name", playerNameInput.value);
+  if (gameState === "ended" && !scoreSaved) renderRecords();
 });
 
 window.addEventListener("keydown", (event) => {
-  ensureAudio();
+  if (gameState === "playing") ensureAudio();
   keys.add(event.key);
 });
 window.addEventListener("keyup", (event) => keys.delete(event.key));
@@ -950,5 +1036,5 @@ if ("serviceWorker" in navigator) {
 loadRecords();
 playerNameInput.value = localStorage.getItem("jeongwoo-battle-player-name") || playerNameInput.value;
 resize();
-resetGame();
+showStartScreen();
 requestAnimationFrame(loop);

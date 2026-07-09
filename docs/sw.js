@@ -1,10 +1,10 @@
-const CACHE_NAME = "jeongwoo-battle-v5";
+const CACHE_NAME = "jeongwoo-battle-v7";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=5",
-  "./app.js?v=5",
-  "./manifest.webmanifest?v=5",
+  "./styles.css?v=7",
+  "./app.js?v=7",
+  "./manifest.webmanifest?v=7",
   "./icon.svg"
 ];
 

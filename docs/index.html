@@ -8,19 +8,17 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Jeongwoo Battle">
   <title>Jeongwoo Battle</title>
-  <link rel="manifest" href="./manifest.webmanifest?v=5">
+  <link rel="manifest" href="./manifest.webmanifest?v=7">
   <link rel="apple-touch-icon" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=5">
+  <link rel="stylesheet" href="./styles.css?v=7">
 </head>
 <body>
   <main class="game-shell">
     <canvas id="gameCanvas" width="900" height="1500" aria-label="Jeongwoo Battle game screen"></canvas>
 
-    <section class="setup-panel">
-      <label>
-        <span class="label">Player</span>
-        <input id="playerName" type="text" maxlength="14" value="Jeongwoo" autocomplete="off">
-      </label>
+    <section id="startPanel" class="start-panel">
+      <h1>Jeongwoo Battle</h1>
+      <p>Choose your unit</p>
       <label>
         <span class="label">Unit</span>
         <select id="unitSelect">
@@ -30,6 +28,7 @@
           <option value="ship">Ship</option>
         </select>
       </label>
+      <button id="startButton" class="primary-action" type="button">Start Game</button>
     </section>
 
     <section class="hud" aria-live="polite">
@@ -51,19 +50,25 @@
       <div id="healthBar"></div>
     </section>
 
-    <section class="score-panel">
-      <span class="label">Records</span>
+    <section id="gameOverPanel" class="end-panel" hidden>
+      <h2>Game Over</h2>
+      <strong id="finalScore">Score 0</strong>
+      <label>
+        <span class="label">Player Name</span>
+        <input id="playerName" type="text" maxlength="14" value="Jeongwoo" autocomplete="off">
+      </label>
+      <button id="saveScoreButton" class="primary-action" type="button">Save Score</button>
+      <span class="label">Score Ranking</span>
       <ol id="scoreList"></ol>
+      <button id="restartButton" class="secondary-action" type="button">Play Again</button>
     </section>
-
-    <button id="restartButton" class="restart" type="button" hidden>Restart</button>
 
     <div id="moveStick" class="stick" aria-label="Move joystick">
       <div id="moveKnob"></div>
     </div>
-    <button id="shootButton" class="shoot" type="button" aria-label="Shoot">●</button>
+    <button id="shootButton" class="shoot" type="button" aria-label="Shoot">FIRE</button>
   </main>
 
-  <script src="./app.js?v=5" defer></script>
+  <script src="./app.js?v=7" defer></script>
 </body>
 </html>
