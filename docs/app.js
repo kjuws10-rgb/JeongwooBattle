@@ -19,6 +19,7 @@ const unitSelect = document.querySelector("#unitSelect");
 const scoreList = document.querySelector("#scoreList");
 
 const world = { width: 900, height: 1500 };
+const arenaTop = 176;
 const input = { x: 0, y: 0, shooting: false };
 const keys = new Set();
 const storageKey = "jeongwoo-battle-records-v1";
@@ -107,6 +108,8 @@ let currentMapIndex = 0;
 let selectedUnit = "tank";
 let records = [];
 let scoreSaved = false;
+let visualTier = 1;
+let dynamicObjects = [];
 
 const player = {
   x: world.width / 2,
@@ -119,7 +122,9 @@ const player = {
   missiles: 0,
   shieldTime: 0,
   angle: -Math.PI / 2,
-  invulnerable: 0
+  invulnerable: 0,
+  terrainCooldown: 0,
+  boostTime: 0
 };
 
 let bullets = [];
@@ -153,6 +158,8 @@ function resetRoundState() {
   player.shieldTime = 0;
   player.angle = -Math.PI / 2;
   player.invulnerable = 0;
+  player.terrainCooldown = 0;
+  player.boostTime = 0;
   bullets = [];
   enemies = [];
   cubes = [];
@@ -165,7 +172,9 @@ function resetRoundState() {
   itemTimer = 4;
   currentMapIndex = 0;
   scoreSaved = false;
+  visualTier = 1;
   gameOver = false;
+  rebuildDynamicTerrain();
   updateHud();
   renderRecords();
 }
@@ -191,7 +200,7 @@ function startGame() {
 
 function updateHud() {
   scoreEl.textContent = score;
-  waveEl.textContent = currentMap().name;
+  waveEl.textContent = `${currentMap().name} L${playerTier()}`;
   powerEl.textContent = `P${player.power} M${player.missiles} S${Math.ceil(player.shieldTime)}`;
   healthBar.style.width = `${Math.max(0, (player.health / player.maxHealth) * 100)}%`;
 }
@@ -209,7 +218,95 @@ function currentMap() {
 }
 
 function currentObstacles() {
-  return currentMap().obstacles;
+  return currentMap().obstacles.concat(dynamicObjects.filter((object) => object.blocks).map(dynamicObjectRect));
+}
+
+function playerTier() {
+  return clamp(1 + Math.floor(score / 250), 1, 5);
+}
+
+function rebuildDynamicTerrain() {
+  const map = currentMap();
+  const level = Math.max(currentMapIndex + 1, playerTier());
+  dynamicObjects = [];
+
+  dynamicObjects.push({ type: "jump", x: 385, y: 390 + level * 34, w: 130, h: 64, color: map.edge });
+
+  if (level >= 2) {
+    dynamicObjects.push({ type: "moving", blocks: true, baseX: 115, baseY: 680, w: 170, h: 58, amp: 90, speed: 1.1, phase: 0.4, color: map.block });
+    dynamicObjects.push({ type: "jump", x: 610, y: 960, w: 145, h: 64, color: "#fb923c" });
+  }
+
+  if (level >= 3) {
+    dynamicObjects.push({ type: "portal", id: "a", x: 165, y: 560, radius: 34, targetId: "b", color: "#67e8f9" });
+    dynamicObjects.push({ type: "portal", id: "b", x: 735, y: 1120, radius: 34, targetId: "a", color: "#c084fc" });
+    dynamicObjects.push({ type: "moving", blocks: true, baseX: 590, baseY: 520, w: 120, h: 120, amp: 110, speed: 1.35, phase: 1.2, color: map.block });
+  }
+
+  if (level >= 4) {
+    dynamicObjects.push({ type: "portal", id: "c", x: 735, y: 360, radius: 30, targetId: "d", color: "#f0abfc" });
+    dynamicObjects.push({ type: "portal", id: "d", x: 165, y: 1260, radius: 30, targetId: "c", color: "#7dd3fc" });
+    dynamicObjects.push({ type: "moving", blocks: true, baseX: 330, baseY: 820, w: 240, h: 62, amp: 150, speed: 1.55, phase: 2.1, color: map.block });
+  }
+
+  if (level >= 5) {
+    dynamicObjects.push({ type: "jump", x: 140, y: 1040, w: 130, h: 66, color: "#86efac" });
+    dynamicObjects.push({ type: "moving", blocks: true, baseX: 120, baseY: 1180, w: 180, h: 54, amp: 210, speed: 1.85, phase: 2.8, color: map.block });
+  }
+}
+
+function dynamicObjectRect(object) {
+  if (object.type !== "moving") return object;
+
+  const offset = Math.sin(lastTime / 1000 * object.speed + object.phase) * object.amp;
+  return {
+    x: object.baseX + offset,
+    y: object.baseY,
+    w: object.w,
+    h: object.h
+  };
+}
+
+function clampToArena(entity) {
+  entity.x = clamp(entity.x, entity.radius, world.width - entity.radius);
+  entity.y = clamp(entity.y, arenaTop + entity.radius, world.height - entity.radius);
+}
+
+function updateTerrainEffects(dt) {
+  player.terrainCooldown = Math.max(0, player.terrainCooldown - dt);
+  player.boostTime = Math.max(0, player.boostTime - dt);
+
+  if (player.terrainCooldown > 0) return;
+
+  for (const object of dynamicObjects) {
+    if (object.type === "jump" && circleRectOverlap(player, object)) {
+      const force = 190 + playerTier() * 22;
+      player.x += Math.cos(player.angle) * force;
+      player.y += Math.sin(player.angle) * force;
+      clampToArena(player);
+      player.boostTime = 0.42;
+      player.invulnerable = Math.max(player.invulnerable, 0.32);
+      player.terrainCooldown = 0.85;
+      addParticles(player.x, player.y, object.color, 26);
+      playTone(740, 0.12, "triangle", 0.065);
+      return;
+    }
+
+    if (object.type === "portal" && distance(player, object) < player.radius + object.radius) {
+      const target = dynamicObjects.find((candidate) => candidate.id === object.targetId);
+      if (!target) return;
+      addParticles(player.x, player.y, object.color, 28);
+      player.x = target.x;
+      player.y = target.y + target.radius + player.radius + 10;
+      clampToArena(player);
+      player.terrainCooldown = 1.15;
+      player.invulnerable = Math.max(player.invulnerable, 0.5);
+      addParticles(player.x, player.y, target.color, 34);
+      playTone(260, 0.08, "sine", 0.06);
+      window.setTimeout(() => playTone(620, 0.12, "sine", 0.06), 90);
+      return;
+    }
+  }
 }
 
 function updateMapByScore() {
@@ -221,8 +318,17 @@ function updateMapByScore() {
 
   if (nextIndex !== currentMapIndex) {
     currentMapIndex = nextIndex;
+    rebuildDynamicTerrain();
     addParticles(player.x, player.y, currentMap().edge, 34);
     playTone(330 + nextIndex * 90, 0.25, "triangle", 0.075);
+  }
+
+  const nextTier = playerTier();
+  if (nextTier > visualTier) {
+    visualTier = nextTier;
+    rebuildDynamicTerrain();
+    addParticles(player.x, player.y, units[selectedUnit].shot, 42);
+    playTone(520 + nextTier * 70, 0.18, "triangle", 0.08);
   }
 }
 
@@ -510,7 +616,7 @@ function spawnFieldItem() {
     const candidate = {
       type,
       x: 70 + Math.random() * (world.width - 140),
-      y: 150 + Math.random() * (world.height - 260),
+      y: arenaTop + 70 + Math.random() * (world.height - arenaTop - 180),
       radius: 16,
       ttl: 14
     };
@@ -539,9 +645,12 @@ function update(dt) {
     player.angle = Math.atan2(moveY, moveX);
   }
 
-  player.x = clamp(player.x + moveX * player.speed * dt, player.radius, world.width - player.radius);
-  player.y = clamp(player.y + moveY * player.speed * dt, player.radius, world.height - player.radius);
+  const speedBoost = player.boostTime > 0 ? 1.18 : 1;
+  player.x += moveX * player.speed * speedBoost * dt;
+  player.y += moveY * player.speed * speedBoost * dt;
+  clampToArena(player);
   resolveCircleObstacles(player);
+  updateTerrainEffects(dt);
   player.invulnerable = Math.max(0, player.invulnerable - dt);
   player.shieldTime = Math.max(0, player.shieldTime - dt);
 
@@ -571,6 +680,7 @@ function update(dt) {
     const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
     enemy.x += Math.cos(angle) * enemy.speed * dt;
     enemy.y += Math.sin(angle) * enemy.speed * dt;
+    clampToArena(enemy);
     resolveCircleObstacles(enemy);
   });
 
@@ -724,7 +834,9 @@ function draw() {
     ctx.stroke();
   }
 
+  drawArenaBoundary();
   drawObstacles();
+  drawDynamicTerrain();
   cubes.forEach(drawCube);
   items.forEach(drawItem);
   bullets.forEach(drawBullet);
@@ -744,6 +856,69 @@ function drawObstacles() {
   currentObstacles().forEach(({ x, y, w, h }) => {
     ctx.fillRect(x, y, w, h);
     ctx.strokeRect(x, y, w, h);
+  });
+}
+
+function drawArenaBoundary() {
+  ctx.save();
+  ctx.fillStyle = "rgba(2, 6, 23, 0.72)";
+  ctx.fillRect(0, 0, world.width, arenaTop);
+  ctx.fillStyle = "rgba(248, 250, 252, 0.08)";
+  ctx.fillRect(0, arenaTop - 18, world.width, 18);
+  ctx.strokeStyle = currentMap().edge;
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(0, arenaTop);
+  ctx.lineTo(world.width, arenaTop);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawDynamicTerrain() {
+  dynamicObjects.forEach((object) => {
+    if (object.type === "jump") {
+      ctx.save();
+      ctx.fillStyle = object.color;
+      ctx.strokeStyle = "#fff7ed";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(object.x, object.y + object.h);
+      ctx.lineTo(object.x + object.w / 2, object.y);
+      ctx.lineTo(object.x + object.w, object.y + object.h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#111827";
+      ctx.font = "900 24px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("JUMP", object.x + object.w / 2, object.y + object.h * 0.58);
+      ctx.restore();
+    } else if (object.type === "portal") {
+      ctx.save();
+      const pulse = 1 + Math.sin(lastTime / 180) * 0.08;
+      ctx.translate(object.x, object.y);
+      ctx.scale(pulse, pulse);
+      ctx.strokeStyle = object.color;
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.arc(0, 0, object.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = "#f8fafc";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, object.radius * 0.56, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    } else if (object.type === "moving") {
+      const rect = dynamicObjectRect(object);
+      ctx.save();
+      ctx.strokeStyle = "#f8fafc";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([14, 12]);
+      ctx.strokeRect(rect.x + 8, rect.y + 8, rect.w - 16, rect.h - 16);
+      ctx.restore();
+    }
   });
 }
 
@@ -802,43 +977,100 @@ function drawPlayer() {
 
 function drawUnitBody() {
   const unit = units[selectedUnit];
+  const tier = playerTier();
   ctx.fillStyle = unit.color;
   ctx.strokeStyle = "#f8fafc";
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 3 + tier;
+
+  if (tier >= 3) {
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = unit.shot;
+    ctx.beginPath();
+    ctx.arc(0, 0, player.radius + 12 + tier * 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
 
   if (selectedUnit === "jet") {
     ctx.beginPath();
-    ctx.moveTo(42, 0);
-    ctx.lineTo(-24, -24);
+    ctx.moveTo(42 + tier * 3, 0);
+    ctx.lineTo(-24, -24 - tier * 2);
     ctx.lineTo(-10, 0);
-    ctx.lineTo(-24, 24);
+    ctx.lineTo(-24, 24 + tier * 2);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    if (tier >= 2) {
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(-14, -34, 18 + tier * 3, 8);
+      ctx.fillRect(-14, 26, 18 + tier * 3, 8);
+    }
+    if (tier >= 4) {
+      ctx.fillStyle = unit.shot;
+      ctx.fillRect(-34, -8, 18, 6);
+      ctx.fillRect(-34, 2, 18, 6);
+    }
   } else if (selectedUnit === "rover") {
-    ctx.fillRect(-28, -22, 56, 44);
-    ctx.strokeRect(-28, -22, 56, 44);
+    ctx.fillRect(-28 - tier, -22 - tier, 56 + tier * 2, 44 + tier * 2);
+    ctx.strokeRect(-28 - tier, -22 - tier, 56 + tier * 2, 44 + tier * 2);
     ctx.fillStyle = "#111827";
     ctx.fillRect(-22, -30, 14, 12);
     ctx.fillRect(8, -30, 14, 12);
     ctx.fillRect(-22, 18, 14, 12);
     ctx.fillRect(8, 18, 14, 12);
+    if (tier >= 2) {
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(8, -7, 36 + tier * 4, 14);
+    }
+    if (tier >= 4) {
+      ctx.fillStyle = unit.shot;
+      ctx.fillRect(-20, -6, 12, 12);
+      ctx.fillRect(-38, -26, 16, 10);
+      ctx.fillRect(-38, 16, 16, 10);
+    }
   } else if (selectedUnit === "ship") {
     ctx.beginPath();
-    ctx.ellipse(0, 0, 38, 26, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 38 + tier * 2, 26 + tier, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = "#dbeafe";
     ctx.beginPath();
     ctx.arc(10, 0, 12, 0, Math.PI * 2);
     ctx.fill();
+    if (tier >= 2) {
+      ctx.fillStyle = unit.shot;
+      ctx.beginPath();
+      ctx.ellipse(-18, -22, 22, 8, -0.35, 0, Math.PI * 2);
+      ctx.ellipse(-18, 22, 22, 8, 0.35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (tier >= 4) {
+      ctx.strokeStyle = "#f8fafc";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 52, -0.75, 0.75);
+      ctx.stroke();
+    }
   } else {
     ctx.beginPath();
-    ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+    ctx.arc(0, 0, player.radius + tier, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = "#f8fafc";
-    ctx.fillRect(8, -8, 34, 16);
+    ctx.fillRect(8, -8, 34 + tier * 5, 16);
+    if (tier >= 2) {
+      ctx.fillStyle = unit.shot;
+      ctx.fillRect(-18, -24, 20, 10);
+      ctx.fillRect(-18, 14, 20, 10);
+    }
+    if (tier >= 4) {
+      ctx.strokeStyle = "#f8fafc";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(0, 0, player.radius + 16, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 }
 

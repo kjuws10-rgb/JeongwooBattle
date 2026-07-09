@@ -121,18 +121,18 @@ select {
 
 .hud {
   position: absolute;
-  top: calc(env(safe-area-inset-top) + 12px);
-  left: 12px;
-  right: 12px;
+  top: calc(env(safe-area-inset-top) + 6px);
+  left: 8px;
+  right: 8px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: 0.9fr 1.15fr 1.15fr;
+  gap: 6px;
   pointer-events: none;
 }
 
 .hud div {
   min-width: 0;
-  padding: 8px 10px;
+  padding: 6px 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   background: var(--panel);
@@ -150,16 +150,16 @@ select {
 .hud strong {
   display: block;
   margin-top: 2px;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
 }
 
 .health {
   position: absolute;
-  top: calc(env(safe-area-inset-top) + 82px);
+  top: calc(env(safe-area-inset-top) + 66px);
   left: 18px;
   right: 18px;
-  height: 10px;
+  height: 9px;
   border-radius: 999px;
   overflow: hidden;
   background: rgba(15, 23, 42, 0.78);
