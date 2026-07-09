@@ -12,6 +12,9 @@
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
   touch-action: none;
 }
 
@@ -21,6 +24,7 @@ body {
   height: 100%;
   margin: 0;
   overflow: hidden;
+  overscroll-behavior: none;
   color: var(--ink);
   background: var(--bg);
 }
@@ -135,6 +139,8 @@ button {
   box-shadow: 0 14px 34px rgba(220, 38, 38, 0.45);
   font-size: 38px;
   font-weight: 900;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .restart {
@@ -160,4 +166,3 @@ button {
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
 }
-
