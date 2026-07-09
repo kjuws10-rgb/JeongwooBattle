@@ -12,9 +12,9 @@
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
   touch-action: none;
 }
 
@@ -113,6 +113,8 @@ button {
   border-radius: 50%;
   background: rgba(15, 23, 42, 0.42);
   backdrop-filter: blur(8px);
+  -webkit-user-select: none !important;
+  user-select: none !important;
 }
 
 #moveKnob {
@@ -139,8 +141,8 @@ button {
   box-shadow: 0 14px 34px rgba(220, 38, 38, 0.45);
   font-size: 38px;
   font-weight: 900;
-  -webkit-user-select: none;
-  user-select: none;
+  -webkit-user-select: none !important;
+  user-select: none !important;
 }
 
 .restart {
