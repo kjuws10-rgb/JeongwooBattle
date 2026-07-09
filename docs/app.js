@@ -8,17 +8,85 @@ const restartButton = document.querySelector("#restartButton");
 const moveStick = document.querySelector("#moveStick");
 const moveKnob = document.querySelector("#moveKnob");
 const shootButton = document.querySelector("#shootButton");
+const playerNameInput = document.querySelector("#playerName");
+const unitSelect = document.querySelector("#unitSelect");
+const scoreList = document.querySelector("#scoreList");
 
 const world = { width: 900, height: 1500 };
 const input = { x: 0, y: 0, shooting: false };
 const keys = new Set();
-const obstacles = [
-  { x: 100, y: 240, w: 180, h: 80 },
-  { x: 620, y: 300, w: 170, h: 90 },
-  { x: 330, y: 610, w: 240, h: 80 },
-  { x: 90, y: 930, w: 210, h: 90 },
-  { x: 600, y: 1050, w: 200, h: 90 },
-  { x: 350, y: 1250, w: 150, h: 80 }
+const storageKey = "jeongwoo-battle-records-v1";
+const units = {
+  tank: { label: "Tank", radius: 32, speed: 300, maxHealth: 130, fireDelay: 0.3, color: "#38bdf8", shot: "#fde047" },
+  jet: { label: "Jet", radius: 25, speed: 410, maxHealth: 82, fireDelay: 0.22, color: "#f97316", shot: "#fdba74" },
+  rover: { label: "Rover", radius: 28, speed: 360, maxHealth: 105, fireDelay: 0.24, color: "#22c55e", shot: "#bbf7d0" },
+  ship: { label: "Ship", radius: 34, speed: 280, maxHealth: 150, fireDelay: 0.34, color: "#a855f7", shot: "#e9d5ff" }
+};
+const maps = [
+  {
+    name: "Grass",
+    minScore: 0,
+    bg: "#14532d",
+    grid: "rgba(255,255,255,0.08)",
+    block: "#854d0e",
+    edge: "#facc15",
+    obstacles: [
+      { x: 100, y: 240, w: 180, h: 80 },
+      { x: 620, y: 300, w: 170, h: 90 },
+      { x: 330, y: 610, w: 240, h: 80 },
+      { x: 90, y: 930, w: 210, h: 90 },
+      { x: 600, y: 1050, w: 200, h: 90 },
+      { x: 350, y: 1250, w: 150, h: 80 }
+    ]
+  },
+  {
+    name: "Desert",
+    minScore: 250,
+    bg: "#92400e",
+    grid: "rgba(254,243,199,0.12)",
+    block: "#451a03",
+    edge: "#fed7aa",
+    obstacles: [
+      { x: 70, y: 190, w: 230, h: 70 },
+      { x: 520, y: 230, w: 270, h: 70 },
+      { x: 250, y: 520, w: 120, h: 270 },
+      { x: 560, y: 720, w: 120, h: 280 },
+      { x: 120, y: 1120, w: 250, h: 80 },
+      { x: 510, y: 1230, w: 250, h: 80 }
+    ]
+  },
+  {
+    name: "Ice",
+    minScore: 600,
+    bg: "#0e7490",
+    grid: "rgba(224,242,254,0.16)",
+    block: "#164e63",
+    edge: "#bae6fd",
+    obstacles: [
+      { x: 150, y: 210, w: 120, h: 260 },
+      { x: 620, y: 190, w: 120, h: 260 },
+      { x: 330, y: 510, w: 240, h: 90 },
+      { x: 80, y: 800, w: 190, h: 180 },
+      { x: 635, y: 800, w: 190, h: 180 },
+      { x: 330, y: 1120, w: 240, h: 100 }
+    ]
+  },
+  {
+    name: "Space",
+    minScore: 1000,
+    bg: "#1e1b4b",
+    grid: "rgba(221,214,254,0.16)",
+    block: "#312e81",
+    edge: "#c4b5fd",
+    obstacles: [
+      { x: 120, y: 170, w: 170, h: 170 },
+      { x: 610, y: 170, w: 170, h: 170 },
+      { x: 365, y: 470, w: 170, h: 170 },
+      { x: 120, y: 820, w: 170, h: 170 },
+      { x: 610, y: 820, w: 170, h: 170 },
+      { x: 350, y: 1190, w: 200, h: 120 }
+    ]
+  }
 ];
 
 let lastTime = 0;
@@ -28,6 +96,10 @@ let itemTimer = 4;
 let score = 0;
 let wave = 1;
 let gameOver = false;
+let currentMapIndex = 0;
+let selectedUnit = "tank";
+let records = [];
+let scoreSaved = false;
 
 const player = {
   x: world.width / 2,
@@ -61,9 +133,14 @@ function resize() {
 }
 
 function resetGame() {
+  selectedUnit = unitSelect.value;
+  const unit = units[selectedUnit];
   player.x = world.width / 2;
   player.y = world.height / 2;
-  player.health = player.maxHealth;
+  player.radius = unit.radius;
+  player.speed = unit.speed;
+  player.maxHealth = unit.maxHealth;
+  player.health = unit.maxHealth;
   player.power = 1;
   player.missiles = 0;
   player.shieldTime = 0;
@@ -78,14 +155,18 @@ function resetGame() {
   wave = 1;
   spawnTimer = 0;
   bulletTimer = 0;
+  itemTimer = 4;
+  currentMapIndex = 0;
+  scoreSaved = false;
   gameOver = false;
   restartButton.hidden = true;
   updateHud();
+  renderRecords();
 }
 
 function updateHud() {
   scoreEl.textContent = score;
-  waveEl.textContent = wave;
+  waveEl.textContent = currentMap().name;
   powerEl.textContent = `P${player.power} M${player.missiles} S${Math.ceil(player.shieldTime)}`;
   healthBar.style.width = `${Math.max(0, player.health)}%`;
 }
@@ -98,6 +179,78 @@ function distance(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
+function currentMap() {
+  return maps[currentMapIndex];
+}
+
+function currentObstacles() {
+  return currentMap().obstacles;
+}
+
+function updateMapByScore() {
+  let nextIndex = 0;
+
+  maps.forEach((map, index) => {
+    if (score >= map.minScore) nextIndex = index;
+  });
+
+  if (nextIndex !== currentMapIndex) {
+    currentMapIndex = nextIndex;
+    addParticles(player.x, player.y, currentMap().edge, 34);
+    playTone(330 + nextIndex * 90, 0.25, "triangle", 0.075);
+  }
+}
+
+function loadRecords() {
+  try {
+    records = JSON.parse(localStorage.getItem(storageKey) || "[]");
+  } catch {
+    records = [];
+  }
+}
+
+function saveRecords() {
+  localStorage.setItem(storageKey, JSON.stringify(records.slice(0, 8)));
+}
+
+function renderRecords() {
+  scoreList.innerHTML = "";
+
+  records.slice(0, 5).forEach((record) => {
+    const item = document.createElement("li");
+    item.textContent = `${record.name} ${record.score} ${record.unit}`;
+    scoreList.appendChild(item);
+  });
+
+  if (records.length === 0) {
+    const item = document.createElement("li");
+    item.textContent = "No records";
+    scoreList.appendChild(item);
+  }
+}
+
+function playerName() {
+  const name = playerNameInput.value.trim();
+  return name || "Player";
+}
+
+function saveScoreRecord() {
+  if (scoreSaved || score <= 0) return;
+
+  scoreSaved = true;
+  records.push({
+    name: playerName(),
+    score,
+    unit: units[selectedUnit].label,
+    zone: currentMap().name,
+    date: new Date().toISOString()
+  });
+  records.sort((a, b) => b.score - a.score);
+  records = records.slice(0, 8);
+  saveRecords();
+  renderRecords();
+}
+
 function circleRectOverlap(circle, rect) {
   const nearestX = clamp(circle.x, rect.x, rect.x + rect.w);
   const nearestY = clamp(circle.y, rect.y, rect.y + rect.h);
@@ -107,7 +260,7 @@ function circleRectOverlap(circle, rect) {
 }
 
 function resolveCircleObstacles(entity) {
-  obstacles.forEach((rect) => {
+  currentObstacles().forEach((rect) => {
     const nearestX = clamp(entity.x, rect.x, rect.x + rect.w);
     const nearestY = clamp(entity.y, rect.y, rect.y + rect.h);
     let dx = entity.x - nearestX;
@@ -138,7 +291,7 @@ function resolveCircleObstacles(entity) {
 }
 
 function bulletHitsObstacle(bullet) {
-  return obstacles.some((rect) => circleRectOverlap(bullet, rect));
+  return currentObstacles().some((rect) => circleRectOverlap(bullet, rect));
 }
 
 function spawnEnemy() {
@@ -225,7 +378,7 @@ function startMusic() {
 function shoot() {
   if (bulletTimer > 0 || gameOver) return;
 
-  bulletTimer = Math.max(0.11, 0.28 - player.power * 0.018);
+  bulletTimer = Math.max(0.1, units[selectedUnit].fireDelay - player.power * 0.018);
   const spread = Math.min(3, Math.floor(player.power / 3));
   const damage = 1 + Math.floor(player.power / 4);
   playTone(420, 0.06, "square", 0.04);
@@ -239,7 +392,8 @@ function shoot() {
       vy: Math.sin(angle) * 760,
       radius: 8,
       damage,
-      life: 0.8
+      life: 0.8,
+      color: units[selectedUnit].shot
     });
   }
 
@@ -287,7 +441,7 @@ function spawnFieldItem() {
       ttl: 14
     };
 
-    if (!obstacles.some((rect) => circleRectOverlap(candidate, rect)) && distance(candidate, player) > 180) {
+    if (!currentObstacles().some((rect) => circleRectOverlap(candidate, rect)) && distance(candidate, player) > 180) {
       item = candidate;
       break;
     }
@@ -380,6 +534,7 @@ function update(dt) {
     addParticles(enemy.x, enemy.y, enemy.color, 12);
     playTone(680, 0.07, "triangle", 0.035);
   });
+  if (defeated.length > 0) updateMapByScore();
   enemies = enemies.filter((enemy) => enemy.health > 0);
 
   enemies.forEach((enemy) => {
@@ -406,6 +561,7 @@ function update(dt) {
       score += 5;
       addParticles(cube.x, cube.y, "#38bdf8", 10);
       playTone(820, 0.09, "triangle", 0.05);
+      updateMapByScore();
       return false;
     }
     return true;
@@ -448,6 +604,7 @@ function update(dt) {
 function endGame() {
   gameOver = true;
   restartButton.hidden = false;
+  saveScoreRecord();
   playTone(92, 0.5, "sawtooth", 0.09);
 }
 
@@ -468,9 +625,11 @@ function draw() {
   ctx.translate(-camX, -camY);
 
   const grid = 90;
-  ctx.fillStyle = "#14532d";
+  const map = currentMap();
+  ctx.fillStyle = map.bg;
   ctx.fillRect(0, 0, world.width, world.height);
-  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  drawBackgroundPattern(map);
+  ctx.strokeStyle = map.grid;
   ctx.lineWidth = 2;
   for (let x = 0; x <= world.width; x += grid) {
     ctx.beginPath();
@@ -498,13 +657,51 @@ function draw() {
 }
 
 function drawObstacles() {
-  ctx.fillStyle = "#854d0e";
-  ctx.strokeStyle = "#facc15";
+  const map = currentMap();
+  ctx.fillStyle = map.block;
+  ctx.strokeStyle = map.edge;
   ctx.lineWidth = 4;
-  obstacles.forEach(({ x, y, w, h }) => {
+  currentObstacles().forEach(({ x, y, w, h }) => {
     ctx.fillRect(x, y, w, h);
     ctx.strokeRect(x, y, w, h);
   });
+}
+
+function drawBackgroundPattern(map) {
+  ctx.save();
+  ctx.globalAlpha = 0.22;
+  if (map.name === "Desert") {
+    ctx.fillStyle = "#fbbf24";
+    for (let i = 0; i < 18; i += 1) {
+      ctx.beginPath();
+      ctx.arc((i * 131) % world.width, 120 + ((i * 211) % 1250), 18 + (i % 4) * 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (map.name === "Ice") {
+    ctx.strokeStyle = "#e0f2fe";
+    ctx.lineWidth = 5;
+    for (let i = 0; i < 10; i += 1) {
+      const x = 80 + ((i * 211) % 730);
+      const y = 160 + ((i * 173) % 1180);
+      ctx.beginPath();
+      ctx.moveTo(x - 32, y);
+      ctx.lineTo(x + 32, y);
+      ctx.moveTo(x, y - 32);
+      ctx.lineTo(x, y + 32);
+      ctx.stroke();
+    }
+  } else if (map.name === "Space") {
+    ctx.fillStyle = "#f8fafc";
+    for (let i = 0; i < 64; i += 1) {
+      ctx.fillRect((i * 67) % world.width, (i * 149) % world.height, 3, 3);
+    }
+  } else {
+    ctx.fillStyle = "#86efac";
+    for (let i = 0; i < 16; i += 1) {
+      ctx.fillRect((i * 97) % world.width, 80 + ((i * 191) % 1320), 34, 8);
+    }
+  }
+  ctx.restore();
 }
 
 function drawPlayer() {
@@ -512,10 +709,7 @@ function drawPlayer() {
   ctx.translate(player.x, player.y);
   ctx.rotate(player.angle);
   ctx.globalAlpha = player.invulnerable > 0 ? 0.62 : 1;
-  ctx.fillStyle = "#38bdf8";
-  ctx.beginPath();
-  ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
-  ctx.fill();
+  drawUnitBody();
   if (player.shieldTime > 0) {
     ctx.strokeStyle = "#93c5fd";
     ctx.lineWidth = 8;
@@ -523,9 +717,49 @@ function drawPlayer() {
     ctx.arc(0, 0, player.radius + 12, 0, Math.PI * 2);
     ctx.stroke();
   }
-  ctx.fillStyle = "#f8fafc";
-  ctx.fillRect(8, -8, 32, 16);
   ctx.restore();
+}
+
+function drawUnitBody() {
+  const unit = units[selectedUnit];
+  ctx.fillStyle = unit.color;
+  ctx.strokeStyle = "#f8fafc";
+  ctx.lineWidth = 4;
+
+  if (selectedUnit === "jet") {
+    ctx.beginPath();
+    ctx.moveTo(42, 0);
+    ctx.lineTo(-24, -24);
+    ctx.lineTo(-10, 0);
+    ctx.lineTo(-24, 24);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else if (selectedUnit === "rover") {
+    ctx.fillRect(-28, -22, 56, 44);
+    ctx.strokeRect(-28, -22, 56, 44);
+    ctx.fillStyle = "#111827";
+    ctx.fillRect(-22, -30, 14, 12);
+    ctx.fillRect(8, -30, 14, 12);
+    ctx.fillRect(-22, 18, 14, 12);
+    ctx.fillRect(8, 18, 14, 12);
+  } else if (selectedUnit === "ship") {
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 38, 26, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#dbeafe";
+    ctx.beginPath();
+    ctx.arc(10, 0, 12, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(8, -8, 34, 16);
+  }
 }
 
 function drawEnemy(enemy) {
@@ -540,7 +774,7 @@ function drawEnemy(enemy) {
 }
 
 function drawBullet(bullet) {
-  ctx.fillStyle = bullet.missile ? "#fb923c" : "#fde047";
+  ctx.fillStyle = bullet.missile ? "#fb923c" : bullet.color || "#fde047";
   ctx.beginPath();
   ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
   ctx.fill();
@@ -598,6 +832,8 @@ function drawGameOver() {
   ctx.fillText("Game Over", world.width / 2, world.height / 2 - 40);
   ctx.font = "700 34px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
   ctx.fillText(`Score ${score}`, world.width / 2, world.height / 2 + 20);
+  ctx.font = "700 26px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+  ctx.fillText(`${playerName()} / ${units[selectedUnit].label} / ${currentMap().name}`, world.width / 2, world.height / 2 + 62);
 }
 
 function loop(time) {
@@ -609,6 +845,9 @@ function loop(time) {
 }
 
 function blockBrowserGesture(event) {
+  if (event.target && ["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName)) {
+    return;
+  }
   event.preventDefault();
 }
 
@@ -679,6 +918,19 @@ restartButton.addEventListener("click", () => {
   resetGame();
 });
 
+unitSelect.addEventListener("change", () => {
+  if (!gameOver && score > 0) {
+    unitSelect.value = selectedUnit;
+    return;
+  }
+  selectedUnit = unitSelect.value;
+  resetGame();
+});
+
+playerNameInput.addEventListener("input", () => {
+  localStorage.setItem("jeongwoo-battle-player-name", playerNameInput.value);
+});
+
 window.addEventListener("keydown", (event) => {
   ensureAudio();
   keys.add(event.key);
@@ -695,6 +947,8 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+loadRecords();
+playerNameInput.value = localStorage.getItem("jeongwoo-battle-player-name") || playerNameInput.value;
 resize();
 resetGame();
 requestAnimationFrame(loop);

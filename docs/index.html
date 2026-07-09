@@ -6,15 +6,31 @@
   <meta name="theme-color" content="#111827">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="정우배틀">
-  <title>정우배틀</title>
-  <link rel="manifest" href="./manifest.webmanifest?v=3">
+  <meta name="apple-mobile-web-app-title" content="Jeongwoo Battle">
+  <title>Jeongwoo Battle</title>
+  <link rel="manifest" href="./manifest.webmanifest?v=5">
   <link rel="apple-touch-icon" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=3">
+  <link rel="stylesheet" href="./styles.css?v=5">
 </head>
 <body>
   <main class="game-shell">
-    <canvas id="gameCanvas" width="900" height="1500" aria-label="정우배틀 게임 화면"></canvas>
+    <canvas id="gameCanvas" width="900" height="1500" aria-label="Jeongwoo Battle game screen"></canvas>
+
+    <section class="setup-panel">
+      <label>
+        <span class="label">Player</span>
+        <input id="playerName" type="text" maxlength="14" value="Jeongwoo" autocomplete="off">
+      </label>
+      <label>
+        <span class="label">Unit</span>
+        <select id="unitSelect">
+          <option value="tank">Tank</option>
+          <option value="jet">Jet</option>
+          <option value="rover">Rover</option>
+          <option value="ship">Ship</option>
+        </select>
+      </label>
+    </section>
 
     <section class="hud" aria-live="polite">
       <div>
@@ -22,17 +38,22 @@
         <strong id="score">0</strong>
       </div>
       <div>
-        <span class="label">Wave</span>
-        <strong id="wave">1</strong>
+        <span class="label">Zone</span>
+        <strong id="wave">Grass</strong>
       </div>
       <div>
         <span class="label">Power</span>
-        <strong id="power">1</strong>
+        <strong id="power">P1 M0 S0</strong>
       </div>
     </section>
 
     <section class="health">
       <div id="healthBar"></div>
+    </section>
+
+    <section class="score-panel">
+      <span class="label">Records</span>
+      <ol id="scoreList"></ol>
     </section>
 
     <button id="restartButton" class="restart" type="button" hidden>Restart</button>
@@ -43,6 +64,6 @@
     <button id="shootButton" class="shoot" type="button" aria-label="Shoot">●</button>
   </main>
 
-  <script src="./app.js?v=3" defer></script>
+  <script src="./app.js?v=5" defer></script>
 </body>
 </html>

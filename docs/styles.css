@@ -34,6 +34,22 @@ button {
   color: inherit;
 }
 
+input,
+select {
+  min-width: 0;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 0 8px;
+  color: var(--ink);
+  background: rgba(15, 23, 42, 0.82);
+  font: inherit;
+  font-weight: 800;
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  touch-action: manipulation;
+}
+
 .game-shell {
   position: fixed;
   inset: 0;
@@ -51,9 +67,36 @@ button {
   display: block;
 }
 
-.hud {
+.setup-panel {
   position: absolute;
   top: calc(env(safe-area-inset-top) + 10px);
+  left: 12px;
+  right: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 122px;
+  gap: 8px;
+  z-index: 2;
+}
+
+.setup-panel label,
+.score-panel {
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+}
+
+.setup-panel input,
+.setup-panel select {
+  width: 100%;
+  margin-top: 3px;
+}
+
+.hud {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 76px);
   left: 12px;
   right: 12px;
   display: grid;
@@ -88,13 +131,38 @@ button {
 
 .health {
   position: absolute;
-  top: calc(env(safe-area-inset-top) + 78px);
+  top: calc(env(safe-area-inset-top) + 144px);
   left: 18px;
   right: 18px;
   height: 10px;
   border-radius: 999px;
   overflow: hidden;
   background: rgba(15, 23, 42, 0.78);
+}
+
+.score-panel {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 164px);
+  right: 12px;
+  width: 168px;
+  max-height: 138px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#scoreList {
+  margin: 4px 0 0;
+  padding-left: 20px;
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+#scoreList li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #healthBar {
