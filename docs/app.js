@@ -27,7 +27,19 @@ const units = {
   tank: { label: "Tank", radius: 32, speed: 300, maxHealth: 130, fireDelay: 0.3, color: "#38bdf8", shot: "#fde047" },
   jet: { label: "Jet", radius: 25, speed: 410, maxHealth: 82, fireDelay: 0.22, color: "#f97316", shot: "#fdba74" },
   rover: { label: "Rover", radius: 28, speed: 360, maxHealth: 105, fireDelay: 0.24, color: "#22c55e", shot: "#bbf7d0" },
-  ship: { label: "Ship", radius: 34, speed: 280, maxHealth: 150, fireDelay: 0.34, color: "#a855f7", shot: "#e9d5ff" }
+  ship: { label: "Ship", radius: 34, speed: 280, maxHealth: 150, fireDelay: 0.34, color: "#a855f7", shot: "#e9d5ff" },
+  mech: { label: "Mech", radius: 35, speed: 285, maxHealth: 170, fireDelay: 0.36, color: "#f43f5e", shot: "#fecdd3" },
+  drone: { label: "Drone", radius: 23, speed: 430, maxHealth: 78, fireDelay: 0.2, color: "#14b8a6", shot: "#99f6e4" },
+  speeder: { label: "Speeder", radius: 24, speed: 465, maxHealth: 72, fireDelay: 0.26, color: "#eab308", shot: "#fef08a" },
+  walker: { label: "Walker", radius: 33, speed: 310, maxHealth: 145, fireDelay: 0.29, color: "#64748b", shot: "#cbd5e1" }
+};
+const itemSettings = {
+  fieldSpawnBase: 13,
+  fieldSpawnVariance: 8,
+  fieldMissileChance: 0.38,
+  dropCubeChance: 0.28,
+  dropMissileChance: 0.08,
+  dropShieldChance: 0.06
 };
 const maps = [
   {
@@ -39,11 +51,11 @@ const maps = [
     edge: "#facc15",
     obstacles: [
       { x: 100, y: 240, w: 180, h: 80 },
-      { x: 620, y: 300, w: 170, h: 90 },
+      { x: 620, y: 300, w: 170, h: 90, shape: "round" },
       { x: 330, y: 610, w: 240, h: 80 },
       { x: 90, y: 930, w: 210, h: 90 },
-      { x: 600, y: 1050, w: 200, h: 90 },
-      { x: 350, y: 1250, w: 150, h: 80 }
+      { x: 600, y: 1050, w: 200, h: 90, shape: "cross" },
+      { x: 350, y: 1250, w: 150, h: 80, shape: "diamond" }
     ]
   },
   {
@@ -56,9 +68,9 @@ const maps = [
     obstacles: [
       { x: 70, y: 190, w: 230, h: 70 },
       { x: 520, y: 230, w: 270, h: 70 },
-      { x: 250, y: 520, w: 120, h: 270 },
-      { x: 560, y: 720, w: 120, h: 280 },
-      { x: 120, y: 1120, w: 250, h: 80 },
+      { x: 250, y: 520, w: 120, h: 270, shape: "pillar" },
+      { x: 560, y: 720, w: 120, h: 280, shape: "pillar" },
+      { x: 120, y: 1120, w: 250, h: 80, shape: "diamond" },
       { x: 510, y: 1230, w: 250, h: 80 }
     ]
   },
@@ -70,12 +82,12 @@ const maps = [
     block: "#164e63",
     edge: "#bae6fd",
     obstacles: [
-      { x: 150, y: 210, w: 120, h: 260 },
-      { x: 620, y: 190, w: 120, h: 260 },
+      { x: 150, y: 210, w: 120, h: 260, shape: "pillar" },
+      { x: 620, y: 190, w: 120, h: 260, shape: "pillar" },
       { x: 330, y: 510, w: 240, h: 90 },
-      { x: 80, y: 800, w: 190, h: 180 },
-      { x: 635, y: 800, w: 190, h: 180 },
-      { x: 330, y: 1120, w: 240, h: 100 }
+      { x: 80, y: 800, w: 190, h: 180, shape: "round" },
+      { x: 635, y: 800, w: 190, h: 180, shape: "round" },
+      { x: 330, y: 1120, w: 240, h: 100, shape: "cross" }
     ]
   },
   {
@@ -86,12 +98,12 @@ const maps = [
     block: "#312e81",
     edge: "#c4b5fd",
     obstacles: [
-      { x: 120, y: 170, w: 170, h: 170 },
-      { x: 610, y: 170, w: 170, h: 170 },
-      { x: 365, y: 470, w: 170, h: 170 },
-      { x: 120, y: 820, w: 170, h: 170 },
-      { x: 610, y: 820, w: 170, h: 170 },
-      { x: 350, y: 1190, w: 200, h: 120 }
+      { x: 120, y: 170, w: 170, h: 170, shape: "diamond" },
+      { x: 610, y: 170, w: 170, h: 170, shape: "round" },
+      { x: 365, y: 470, w: 170, h: 170, shape: "cross" },
+      { x: 120, y: 820, w: 170, h: 170, shape: "round" },
+      { x: 610, y: 820, w: 170, h: 170, shape: "diamond" },
+      { x: 350, y: 1190, w: 200, h: 120, shape: "pillar" }
     ]
   },
   {
@@ -102,12 +114,12 @@ const maps = [
     block: "#701a75",
     edge: "#f0abfc",
     obstacles: [
-      { x: 80, y: 230, w: 220, h: 70 },
-      { x: 610, y: 250, w: 170, h: 180 },
-      { x: 280, y: 520, w: 330, h: 70 },
-      { x: 90, y: 820, w: 160, h: 220 },
-      { x: 640, y: 880, w: 170, h: 200 },
-      { x: 310, y: 1210, w: 280, h: 80 }
+      { x: 80, y: 230, w: 220, h: 70, shape: "diamond" },
+      { x: 610, y: 250, w: 170, h: 180, shape: "round" },
+      { x: 280, y: 520, w: 330, h: 70, shape: "cross" },
+      { x: 90, y: 820, w: 160, h: 220, shape: "pillar" },
+      { x: 640, y: 880, w: 170, h: 200, shape: "round" },
+      { x: 310, y: 1210, w: 280, h: 80, shape: "diamond" }
     ]
   },
   {
@@ -118,12 +130,12 @@ const maps = [
     block: "#450a0a",
     edge: "#fca5a5",
     obstacles: [
-      { x: 120, y: 220, w: 130, h: 240 },
-      { x: 640, y: 220, w: 130, h: 240 },
-      { x: 330, y: 500, w: 240, h: 90 },
-      { x: 130, y: 780, w: 250, h: 80 },
-      { x: 520, y: 930, w: 250, h: 80 },
-      { x: 350, y: 1190, w: 200, h: 180 }
+      { x: 120, y: 220, w: 130, h: 240, shape: "pillar" },
+      { x: 640, y: 220, w: 130, h: 240, shape: "pillar" },
+      { x: 330, y: 500, w: 240, h: 90, shape: "cross" },
+      { x: 130, y: 780, w: 250, h: 80, shape: "diamond" },
+      { x: 520, y: 930, w: 250, h: 80, shape: "diamond" },
+      { x: 350, y: 1190, w: 200, h: 180, shape: "round" }
     ]
   }
 ];
@@ -776,7 +788,7 @@ function addParticles(x, y, color, count) {
 }
 
 function spawnFieldItem() {
-  const type = Math.random() < 0.52 ? "missile" : "shield";
+  const type = Math.random() < itemSettings.fieldMissileChance ? "missile" : "shield";
   let item = null;
 
   for (let attempt = 0; attempt < 40; attempt += 1) {
@@ -830,7 +842,7 @@ function update(dt) {
   itemTimer -= dt;
   if (itemTimer <= 0) {
     spawnFieldItem();
-    itemTimer = 8 + Math.random() * 5;
+    itemTimer = itemSettings.fieldSpawnBase + Math.random() * itemSettings.fieldSpawnVariance;
   }
 
   bulletTimer = Math.max(0, bulletTimer - dt);
@@ -899,11 +911,13 @@ function update(dt) {
   defeated.forEach((enemy) => {
     score += enemy.scoreValue || 10;
     const roll = Math.random();
-    if (roll < 0.42) {
+    const missileLimit = itemSettings.dropCubeChance + itemSettings.dropMissileChance;
+    const shieldLimit = missileLimit + itemSettings.dropShieldChance;
+    if (roll < itemSettings.dropCubeChance) {
       cubes.push({ x: enemy.x, y: enemy.y, radius: 13 });
-    } else if (roll < 0.58) {
+    } else if (roll < missileLimit) {
       items.push({ type: "missile", x: enemy.x, y: enemy.y, radius: 16, ttl: 12 });
-    } else if (roll < 0.72) {
+    } else if (roll < shieldLimit) {
       items.push({ type: "shield", x: enemy.x, y: enemy.y, radius: 16, ttl: 12 });
     }
     addParticles(enemy.x, enemy.y, enemy.color, 12);
@@ -1047,10 +1061,61 @@ function drawObstacles() {
   ctx.fillStyle = map.block;
   ctx.strokeStyle = map.edge;
   ctx.lineWidth = 4;
-  currentObstacles().forEach(({ x, y, w, h }) => {
+  currentObstacles().forEach((obstacle) => drawObstacleShape(obstacle));
+}
+
+function drawObstacleShape({ x, y, w, h, shape }) {
+  if (shape === "round") {
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  } else if (shape === "diamond") {
+    ctx.beginPath();
+    ctx.moveTo(x + w / 2, y);
+    ctx.lineTo(x + w, y + h / 2);
+    ctx.lineTo(x + w / 2, y + h);
+    ctx.lineTo(x, y + h / 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else if (shape === "pillar") {
+    const cap = Math.min(w, h) * 0.22;
+    ctx.beginPath();
+    ctx.moveTo(x + cap, y);
+    ctx.lineTo(x + w - cap, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + cap);
+    ctx.lineTo(x + w, y + h - cap);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - cap, y + h);
+    ctx.lineTo(x + cap, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - cap);
+    ctx.lineTo(x, y + cap);
+    ctx.quadraticCurveTo(x, y, x + cap, y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.save();
+    ctx.globalAlpha = 0.28;
+    ctx.strokeStyle = "#f8fafc";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.32, y + 12);
+    ctx.lineTo(x + w * 0.32, y + h - 12);
+    ctx.moveTo(x + w * 0.68, y + 12);
+    ctx.lineTo(x + w * 0.68, y + h - 12);
+    ctx.stroke();
+    ctx.restore();
+  } else if (shape === "cross") {
+    const barW = Math.max(34, w * 0.34);
+    const barH = Math.max(34, h * 0.34);
+    ctx.fillRect(x + (w - barW) / 2, y, barW, h);
+    ctx.fillRect(x, y + (h - barH) / 2, w, barH);
+    ctx.strokeRect(x + (w - barW) / 2, y, barW, h);
+    ctx.strokeRect(x, y + (h - barH) / 2, w, barH);
+  } else {
     ctx.fillRect(x, y, w, h);
     ctx.strokeRect(x, y, w, h);
-  });
+  }
 }
 
 function drawArenaBoundary() {
@@ -1267,6 +1332,98 @@ function drawUnitBody() {
       ctx.beginPath();
       ctx.arc(0, 0, 52, -0.75, 0.75);
       ctx.stroke();
+    }
+  } else if (selectedUnit === "mech") {
+    ctx.beginPath();
+    ctx.moveTo(28 + tier * 2, -22 - tier);
+    ctx.lineTo(36 + tier * 2, 0);
+    ctx.lineTo(28 + tier * 2, 22 + tier);
+    ctx.lineTo(-20 - tier, 28 + tier);
+    ctx.lineTo(-36 - tier, 12);
+    ctx.lineTo(-36 - tier, -12);
+    ctx.lineTo(-20 - tier, -28 - tier);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#111827";
+    ctx.fillRect(-28 - tier, -34 - tier, 22, 18);
+    ctx.fillRect(-28 - tier, 16 + tier, 22, 18);
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(8, -9, 42 + tier * 6, 18);
+    if (tier >= 3) {
+      ctx.fillStyle = unit.shot;
+      ctx.fillRect(-6, -32, 16, 12);
+      ctx.fillRect(-6, 20, 16, 12);
+    }
+  } else if (selectedUnit === "drone") {
+    const rotor = 17 + tier;
+    [[-30, -24], [-30, 24], [30, -24], [30, 24]].forEach(([rx, ry]) => {
+      ctx.beginPath();
+      ctx.arc(rx, ry, rotor, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = unit.shot;
+      ctx.beginPath();
+      ctx.moveTo(rx - rotor, ry);
+      ctx.lineTo(rx + rotor, ry);
+      ctx.moveTo(rx, ry - rotor);
+      ctx.lineTo(rx, ry + rotor);
+      ctx.stroke();
+      ctx.strokeStyle = "#f8fafc";
+    });
+    ctx.beginPath();
+    ctx.arc(0, 0, 22 + tier, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(8, -6, 28 + tier * 4, 12);
+    if (tier >= 4) {
+      ctx.strokeStyle = unit.shot;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 44, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  } else if (selectedUnit === "speeder") {
+    ctx.beginPath();
+    ctx.moveTo(48 + tier * 3, 0);
+    ctx.lineTo(0, -20 - tier);
+    ctx.lineTo(-34 - tier, -12);
+    ctx.lineTo(-18, 0);
+    ctx.lineTo(-34 - tier, 12);
+    ctx.lineTo(0, 20 + tier);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#111827";
+    ctx.fillRect(-10, -8, 22, 16);
+    if (tier >= 2) {
+      ctx.fillStyle = unit.shot;
+      ctx.fillRect(-42, -18, 18, 8);
+      ctx.fillRect(-42, 10, 18, 8);
+    }
+    if (tier >= 4) {
+      ctx.strokeStyle = "#f8fafc";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(14, -26);
+      ctx.lineTo(36, 0);
+      ctx.lineTo(14, 26);
+      ctx.stroke();
+    }
+  } else if (selectedUnit === "walker") {
+    [[-22, -30], [14, -30], [-22, 18], [14, 18]].forEach(([lx, ly]) => {
+      ctx.fillRect(lx - tier, ly - tier, 18 + tier * 2, 20 + tier);
+      ctx.strokeRect(lx - tier, ly - tier, 18 + tier * 2, 20 + tier);
+    });
+    ctx.fillRect(-30 - tier, -22 - tier, 60 + tier * 2, 44 + tier * 2);
+    ctx.strokeRect(-30 - tier, -22 - tier, 60 + tier * 2, 44 + tier * 2);
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(10, -8, 38 + tier * 5, 16);
+    if (tier >= 3) {
+      ctx.strokeStyle = unit.shot;
+      ctx.lineWidth = 5;
+      ctx.strokeRect(-20, -12, 28, 24);
     }
   } else {
     ctx.beginPath();
