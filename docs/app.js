@@ -313,7 +313,8 @@ function startGame() {
 function updateHud() {
   scoreEl.textContent = score;
   waveEl.textContent = bossActive ? `Boss -> ${maps[bossTargetMapIndex].name}` : `${currentMap().name} L${playerTier()}`;
-  powerEl.textContent = `P${player.power} M${player.missiles} S${Math.ceil(player.shieldTime)}`;
+  const missileType = player.missiles > 0 ? ` ${missileLabel(missileKindForTier(playerTier())).slice(0, 3).toUpperCase()}` : "";
+  powerEl.textContent = `P${player.power} M${player.missiles}${missileType} S${Math.ceil(player.shieldTime)}`;
   healthBar.style.width = `${Math.max(0, (player.health / player.maxHealth) * 100)}%`;
   specialBar.style.width = `${Math.max(0, (player.specialCharge / specialMax) * 100)}%`;
   specialButton.classList.toggle("is-ready", player.specialCharge >= specialMax);
@@ -375,10 +376,70 @@ function tierColor(colors) {
   return colors[Math.min(colors.length - 1, playerTier() - 1)];
 }
 
+function missileKindForTier(tier) {
+  if (tier >= 6) return "gas";
+  if (tier >= 5) return "homing";
+  if (tier >= 4) return "boomerang";
+  if (tier >= 3) return "laser";
+  return "rocket";
+}
+
+function missileLabel(kind) {
+  if (kind === "laser") return "Laser";
+  if (kind === "boomerang") return "Boomerang";
+  if (kind === "homing") return "Homing";
+  if (kind === "gas") return "Gas";
+  return "Rocket";
+}
+
+function createMissile(angle, tier, bonusDamage = 0, radiusBonus = 0) {
+  const kind = missileKindForTier(tier);
+  const speedByKind = {
+    rocket: 560 + tier * 24,
+    laser: 900 + tier * 18,
+    boomerang: 500 + tier * 18,
+    homing: 470 + tier * 16,
+    gas: 430 + tier * 12
+  };
+  const radiusByKind = {
+    rocket: 15,
+    laser: 7,
+    boomerang: 16,
+    homing: 14,
+    gas: 18
+  };
+  const damageByKind = {
+    rocket: 5,
+    laser: 7,
+    boomerang: 6,
+    homing: 6,
+    gas: 4
+  };
+
+  return {
+    x: player.x + Math.cos(angle) * 42,
+    y: player.y + Math.sin(angle) * 42,
+    vx: Math.cos(angle) * speedByKind[kind],
+    vy: Math.sin(angle) * speedByKind[kind],
+    radius: radiusByKind[kind] + Math.floor(tier / 3) + radiusBonus,
+    damage: attackDamage(damageByKind[kind] + Math.floor(player.power / 2) + Math.floor(tier / 2) + bonusDamage),
+    life: kind === "laser" ? 0.42 : 1.35 + tier * 0.06,
+    color: tierColor(missileTierColors),
+    tier,
+    missile: true,
+    kind,
+    age: 0,
+    turnTime: 0.42,
+    pierce: kind === "laser" ? 2 : 0,
+    label: missileLabel(kind)
+  };
+}
+
 function fireRadialShots(count, speed, damage, radius, missile = false) {
   if (gameState !== "playing" || gameOver) return;
 
   const tier = playerTier();
+  const kind = missile ? missileKindForTier(tier) : null;
   for (let i = 0; i < count; i += 1) {
     const angle = (Math.PI * 2 * i) / count;
     bullets.push({
@@ -391,7 +452,11 @@ function fireRadialShots(count, speed, damage, radius, missile = false) {
       life: missile ? 1.35 : 0.9,
       color: missile ? tierColor(missileTierColors) : tierColor(shotTierColors),
       tier,
-      missile
+      missile,
+      kind,
+      age: 0,
+      turnTime: 0.42,
+      pierce: kind === "laser" ? 2 : 0
     });
   }
 }
@@ -602,7 +667,7 @@ function spawnBoss(targetMapIndex) {
   enemyBullets = [];
   const targetMap = maps[targetMapIndex];
   const bossLevel = targetMapIndex + 1;
-  const bossHealth = 92 + bossLevel * 58 + playerTier() * 16;
+  const bossHealth = 96 + targetMapIndex * 34 + targetMapIndex * targetMapIndex * 20 + playerTier() * 8;
   enemies.push({
     type: "boss",
     boss: true,
@@ -617,9 +682,9 @@ function spawnBoss(targetMapIndex) {
     stopDistance: 225,
     scoreValue: 100 + targetMapIndex * 55,
     shootCooldown: 0.85,
-    bulletDamage: 14 + targetMapIndex * 4,
-    bulletSpeed: 245 + targetMapIndex * 24,
-    contactDamage: 22 + targetMapIndex * 7,
+    bulletDamage: 9 + targetMapIndex * 3,
+    bulletSpeed: 205 + targetMapIndex * 18,
+    contactDamage: 15 + targetMapIndex * 5,
     volley: 3 + Math.floor(targetMapIndex / 2),
     pulse: 0
   });
@@ -989,18 +1054,7 @@ function shoot() {
 
   if (player.missiles > 0) {
     player.missiles -= 1;
-    bullets.push({
-      x: player.x + Math.cos(player.angle) * 42,
-      y: player.y + Math.sin(player.angle) * 42,
-      vx: Math.cos(player.angle) * (560 + tier * 26),
-      vy: Math.sin(player.angle) * (560 + tier * 26),
-      radius: 15 + Math.floor(tier / 2),
-      damage: attackDamage(5 + Math.floor(player.power / 2) + Math.floor(tier / 2)),
-      life: 1.35 + tier * 0.05,
-      color: tierColor(missileTierColors),
-      tier,
-      missile: true
-    });
+    bullets.push(createMissile(player.angle, tier));
     playTone(110, 0.18, "sawtooth", 0.08);
   }
 }
@@ -1042,6 +1096,51 @@ function spawnFieldItem() {
   if (item) items.push(item);
 }
 
+function nearestEnemyForBullet(bullet, range) {
+  let nearest = null;
+  let nearestDistance = range;
+
+  enemies.forEach((enemy) => {
+    const dist = distance(bullet, enemy);
+    if (dist < nearestDistance) {
+      nearest = enemy;
+      nearestDistance = dist;
+    }
+  });
+
+  return nearest;
+}
+
+function steerBulletToward(bullet, target, turnRate) {
+  if (!target) return;
+
+  const currentSpeed = Math.max(1, Math.hypot(bullet.vx, bullet.vy));
+  const currentAngle = Math.atan2(bullet.vy, bullet.vx);
+  const targetAngle = Math.atan2(target.y - bullet.y, target.x - bullet.x);
+  let delta = targetAngle - currentAngle;
+  while (delta > Math.PI) delta -= Math.PI * 2;
+  while (delta < -Math.PI) delta += Math.PI * 2;
+  const nextAngle = currentAngle + clamp(delta, -turnRate, turnRate);
+  bullet.vx = Math.cos(nextAngle) * currentSpeed;
+  bullet.vy = Math.sin(nextAngle) * currentSpeed;
+}
+
+function updatePlayerBullet(bullet, dt) {
+  bullet.age = (bullet.age || 0) + dt;
+
+  if (bullet.kind === "homing") {
+    steerBulletToward(bullet, nearestEnemyForBullet(bullet, 420), 0.11);
+  } else if (bullet.kind === "boomerang" && bullet.age > bullet.turnTime) {
+    steerBulletToward(bullet, player, 0.16);
+  } else if (bullet.kind === "gas" && Math.random() < 0.45) {
+    addParticles(bullet.x, bullet.y, "#bef264", 2);
+  }
+
+  bullet.x += bullet.vx * dt;
+  bullet.y += bullet.vy * dt;
+  bullet.life -= dt;
+}
+
 function update(dt) {
   if (gameState !== "playing" || gameOver) return;
 
@@ -1081,11 +1180,7 @@ function update(dt) {
   bulletTimer = Math.max(0, bulletTimer - dt);
   if (input.shooting || keys.has(" ")) shoot();
 
-  bullets.forEach((bullet) => {
-    bullet.x += bullet.vx * dt;
-    bullet.y += bullet.vy * dt;
-    bullet.life -= dt;
-  });
+  bullets.forEach((bullet) => updatePlayerBullet(bullet, dt));
   bullets = bullets.filter((bullet) => bullet.life > 0 && !bulletHitsObstacle(bullet) && bullet.x > -30 && bullet.x < world.width + 30 && bullet.y > -30 && bullet.y < world.height + 30);
 
   enemyBullets.forEach((bullet) => {
@@ -1105,10 +1200,20 @@ function update(dt) {
   for (const bullet of bullets) {
     for (const enemy of enemies) {
       if (distance(bullet, enemy) < bullet.radius + enemy.radius) {
-        bullet.life = 0;
+        if (bullet.pierce > 0) bullet.pierce -= 1;
+        else bullet.life = 0;
         enemy.health -= bullet.damage;
         addParticles(bullet.x, bullet.y, "#fde68a", 4);
-        if (bullet.missile) {
+        if (bullet.kind === "gas") {
+          enemies.forEach((nearby) => {
+            if (nearby !== enemy && distance(enemy, nearby) < 170) {
+              nearby.health -= Math.max(2, Math.ceil(bullet.damage * 0.7));
+              addParticles(nearby.x, nearby.y, "#bef264", 6);
+            }
+          });
+          addParticles(enemy.x, enemy.y, "#bef264", 34);
+          playTone(180, 0.2, "triangle", 0.08);
+        } else if (bullet.missile && bullet.kind !== "laser") {
           enemies.forEach((nearby) => {
             if (nearby !== enemy && distance(enemy, nearby) < 130) {
               nearby.health -= Math.ceil(bullet.damage / 2);
@@ -1116,6 +1221,9 @@ function update(dt) {
           });
           addParticles(enemy.x, enemy.y, "#fb923c", 24);
           playTone(82, 0.24, "sawtooth", 0.1);
+        } else if (bullet.kind === "laser") {
+          addParticles(enemy.x, enemy.y, "#67e8f9", 18);
+          playTone(980, 0.08, "sawtooth", 0.06);
         }
         break;
       }
@@ -1682,6 +1790,53 @@ function drawUnitBody() {
       ctx.stroke();
     }
   }
+  drawUnitUpgradeFx(unit, tier);
+}
+
+function drawUnitUpgradeFx(unit, tier) {
+  if (tier < 5) return;
+
+  ctx.save();
+  ctx.strokeStyle = unit.shot;
+  ctx.fillStyle = unit.shot;
+  ctx.lineWidth = 3;
+  ctx.globalAlpha = 0.86;
+  ctx.beginPath();
+  ctx.arc(0, 0, player.radius + 18, -0.82, 0.82);
+  ctx.arc(0, 0, player.radius + 18, Math.PI - 0.82, Math.PI + 0.82);
+  ctx.stroke();
+
+  ctx.globalAlpha = 0.72;
+  ctx.beginPath();
+  ctx.moveTo(-player.radius - 10, -18);
+  ctx.lineTo(-player.radius - 26 - tier, -7);
+  ctx.lineTo(-player.radius - 10, 0);
+  ctx.lineTo(-player.radius - 26 - tier, 7);
+  ctx.lineTo(-player.radius - 10, 18);
+  ctx.stroke();
+
+  if (tier >= 6) {
+    ctx.globalAlpha = 0.95;
+    ctx.beginPath();
+    ctx.arc(0, 0, 6 + tier, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (tier >= 7) {
+    ctx.globalAlpha = 0.52;
+    ctx.rotate(lastTime / 500);
+    ctx.strokeStyle = "#f8fafc";
+    ctx.beginPath();
+    for (let i = 0; i < 6; i += 1) {
+      const angle = (Math.PI * 2 * i) / 6;
+      const inner = player.radius + 24;
+      const outer = player.radius + 34;
+      ctx.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
+      ctx.lineTo(Math.cos(angle) * outer, Math.sin(angle) * outer);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function drawEnemy(enemy) {
@@ -1766,23 +1921,55 @@ function drawBullet(bullet) {
     ctx.fillStyle = bullet.color || tierColor(missileTierColors);
     ctx.strokeStyle = "#fed7aa";
     ctx.lineWidth = 3 + Math.min(3, Math.floor(tier / 2));
-    ctx.beginPath();
-    ctx.moveTo(bullet.radius + 8 + tier, 0);
-    ctx.lineTo(-bullet.radius, -bullet.radius * 0.62);
-    ctx.lineTo(-bullet.radius * 0.72, 0);
-    ctx.lineTo(-bullet.radius, bullet.radius * 0.62);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    if (bullet.kind === "laser") {
+      ctx.fillStyle = "#67e8f9";
+      ctx.fillRect(-bullet.radius * 2, -4, bullet.radius * 8 + tier * 5, 8);
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(0, -2, bullet.radius * 5 + tier * 3, 4);
+    } else if (bullet.kind === "boomerang") {
+      ctx.beginPath();
+      ctx.arc(0, 0, bullet.radius + 8, -0.9, 0.9);
+      ctx.arc(0, 0, bullet.radius - 2, 0.55, -0.55, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else if (bullet.kind === "gas") {
+      ctx.fillStyle = "#84cc16";
+      ctx.globalAlpha = 0.86;
+      ctx.beginPath();
+      ctx.arc(0, 0, bullet.radius + 6, 0, Math.PI * 2);
+      ctx.arc(-8, -4, bullet.radius * 0.72, 0, Math.PI * 2);
+      ctx.arc(8, 5, bullet.radius * 0.62, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = "#ecfccb";
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(bullet.radius + 8 + tier, 0);
+      ctx.lineTo(-bullet.radius, -bullet.radius * 0.62);
+      ctx.lineTo(-bullet.radius * 0.72, 0);
+      ctx.lineTo(-bullet.radius, bullet.radius * 0.62);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
 
-    ctx.fillStyle = tier >= 4 ? "#fef08a" : "#fee2e2";
-    ctx.beginPath();
-    ctx.moveTo(-bullet.radius - 2, 0);
-    ctx.lineTo(-bullet.radius - 14 - tier * 2, -6 - tier);
-    ctx.lineTo(-bullet.radius - 10 - tier, 0);
-    ctx.lineTo(-bullet.radius - 14 - tier * 2, 6 + tier);
-    ctx.closePath();
-    ctx.fill();
+      if (bullet.kind === "homing") {
+        ctx.fillStyle = "#f8fafc";
+        ctx.beginPath();
+        ctx.arc(2, 0, 4 + tier * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = tier >= 4 ? "#fef08a" : "#fee2e2";
+      ctx.beginPath();
+      ctx.moveTo(-bullet.radius - 2, 0);
+      ctx.lineTo(-bullet.radius - 14 - tier * 2, -6 - tier);
+      ctx.lineTo(-bullet.radius - 10 - tier, 0);
+      ctx.lineTo(-bullet.radius - 14 - tier * 2, 6 + tier);
+      ctx.closePath();
+      ctx.fill();
+    }
   } else if (tier >= 5) {
     ctx.fillStyle = bullet.color || tierColor(shotTierColors);
     ctx.strokeStyle = "#f8fafc";
