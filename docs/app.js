@@ -30,6 +30,9 @@ const specialDescription = document.querySelector("#specialDescription");
 
 const world = { width: 900, height: 1500 };
 const arenaTop = 176;
+const maxStage = 100;
+const stageScoreStep = 320;
+const bossStageInterval = 10;
 const input = { x: 0, y: 0, shooting: false };
 const keys = new Set();
 const storageKey = "jeongwoo-battle-records-v1";
@@ -312,8 +315,10 @@ let visualTier = 1;
 let dynamicObjects = [];
 let unlockedMapIndex = 0;
 let bossTargetMapIndex = null;
+let bossTargetStage = null;
 let bossActive = false;
 let rewardPending = false;
+let clearedBossStage = 0;
 
 const player = {
   x: world.width / 2,
@@ -381,8 +386,10 @@ function resetRoundState() {
   currentMapIndex = 0;
   unlockedMapIndex = 0;
   bossTargetMapIndex = null;
+  bossTargetStage = null;
   bossActive = false;
   rewardPending = false;
+  clearedBossStage = 0;
   scoreSaved = false;
   visualTier = 1;
   gameOver = false;
@@ -415,8 +422,8 @@ function startGame() {
 
 function updateHud() {
   scoreEl.textContent = score;
-  waveEl.textContent = bossActive ? `보스 -> ${maps[bossTargetMapIndex].name}` : `${currentMap().name} ${playerTier()}단계`;
-  const missileType = player.missiles > 0 ? ` ${missileLabel(missileKindForTier(playerTier())).slice(0, 3).toUpperCase()}` : "";
+  waveEl.textContent = bossActive ? `보스 ${bossTargetStage || playerTier()}단계` : `${currentMap().name} ${playerTier()}/${maxStage}단계`;
+  const missileType = player.missiles > 0 ? ` ${missileLabel(missileKindForTier(weaponTierValue())).slice(0, 3).toUpperCase()}` : "";
   powerEl.textContent = `파워${player.power} 미사일${player.missiles}${missileType} 보호${Math.ceil(player.shieldTime)}`;
   healthBar.style.width = `${Math.max(0, (player.health / player.maxHealth) * 100)}%`;
   healthText.textContent = `${Math.max(0, Math.ceil(player.health))} / ${Math.ceil(player.maxHealth)}`;
@@ -492,8 +499,8 @@ function gainSpecial(amount) {
   player.specialCharge = Math.min(specialMax, player.specialCharge + amount * bonus);
 }
 
-function tierColor(colors) {
-  return colors[Math.min(colors.length - 1, playerTier() - 1)];
+function tierColor(colors, tier = weaponTierValue()) {
+  return colors[Math.min(colors.length - 1, tier - 1)];
 }
 
 function missileKindForTier(tier) {
@@ -558,7 +565,7 @@ function createMissile(angle, tier, bonusDamage = 0, radiusBonus = 0) {
 function fireRadialShots(count, speed, damage, radius, missile = false) {
   if (gameState !== "playing" || gameOver) return;
 
-  const tier = playerTier();
+  const tier = weaponTierValue();
   const kind = missile ? missileKindForTier(tier) : null;
   for (let i = 0; i < count; i += 1) {
     const angle = (Math.PI * 2 * i) / count;
@@ -678,16 +685,28 @@ function currentObstacles() {
 }
 
 function playerTier() {
-  return clamp(1 + Math.floor(score / 250), 1, 7);
+  return clamp(1 + Math.floor(score / stageScoreStep), 1, maxStage);
+}
+
+function visualTierValue() {
+  return clamp(1 + Math.floor((playerTier() - 1) / 10), 1, 12);
+}
+
+function weaponTierValue() {
+  return clamp(1 + Math.floor((playerTier() - 1) / 14), 1, 7);
+}
+
+function mapIndexForStage(stage) {
+  return clamp(Math.floor((stage - 1) / 17), 0, maps.length - 1);
 }
 
 function stageDifficulty() {
-  return currentMapIndex + 1;
+  return playerTier();
 }
 
 function rebuildDynamicTerrain() {
   const map = currentMap();
-  const level = Math.max(currentMapIndex + 1, playerTier());
+  const level = Math.max(currentMapIndex + 1, visualTierValue());
   dynamicObjects = [];
 
   dynamicObjects.push({ type: "jump", x: 385, y: 390 + level * 34, w: 130, h: 64, color: map.edge });
@@ -740,7 +759,7 @@ function updateTerrainEffects(dt) {
 
   for (const object of dynamicObjects) {
     if (object.type === "jump" && circleRectOverlap(player, object)) {
-      const force = 190 + playerTier() * 22;
+      const force = 190 + visualTierValue() * 22;
       player.x += Math.cos(player.angle) * force;
       player.y += Math.sin(player.angle) * force;
       clampToArena(player);
@@ -779,9 +798,17 @@ function updateMapByScore() {
     playTone(520 + nextTier * 70, 0.18, "triangle", 0.08);
   }
 
-  const nextMapIndex = unlockedMapIndex + 1;
-  if (!rewardPending && !bossActive && nextMapIndex < maps.length && score >= maps[nextMapIndex].minScore) {
-    spawnBoss(nextMapIndex);
+  if (rewardPending || bossActive) return;
+
+  const nextMapIndex = mapIndexForStage(nextTier);
+  if (nextMapIndex > unlockedMapIndex) {
+    spawnBoss(nextMapIndex, nextTier, true);
+    return;
+  }
+
+  const nextBossStage = Math.floor(nextTier / bossStageInterval) * bossStageInterval;
+  if (nextBossStage >= bossStageInterval && nextBossStage > clearedBossStage) {
+    spawnBoss(currentMapIndex, nextBossStage, false);
   }
 }
 
@@ -797,32 +824,33 @@ function applyPlayerTierUpgrade(tier) {
   gainSpecial(12);
 }
 
-function spawnBoss(targetMapIndex) {
+function spawnBoss(targetMapIndex, targetStage = playerTier(), unlockMap = true) {
   bossActive = true;
-  bossTargetMapIndex = targetMapIndex;
+  bossTargetMapIndex = unlockMap ? targetMapIndex : null;
+  bossTargetStage = targetStage;
   enemies = [];
   enemyBullets = [];
   const targetMap = maps[targetMapIndex];
-  const bossLevel = targetMapIndex + 1;
-  const bossHealth = 96 + targetMapIndex * 34 + targetMapIndex * targetMapIndex * 20 + playerTier() * 8;
+  const bossLevel = targetStage;
+  const bossHealth = 110 + targetStage * 18 + targetStage * targetStage * 1.8 + targetMapIndex * 80;
   enemies.push({
     type: "boss",
     boss: true,
     bossLevel,
     x: world.width / 2,
     y: arenaTop + 170,
-    radius: 62 + targetMapIndex * 6,
+    radius: 58 + Math.min(22, Math.floor(targetStage / 5)) + targetMapIndex * 3,
     health: bossHealth,
     maxHealth: bossHealth,
-    speed: 78 + targetMapIndex * 8,
+    speed: 72 + targetMapIndex * 8 + targetStage * 0.9,
     color: targetMap.edge,
     stopDistance: 225,
-    scoreValue: 100 + targetMapIndex * 55,
+    scoreValue: 90 + targetStage * 12 + targetMapIndex * 55,
     shootCooldown: 0.85,
-    bulletDamage: 9 + targetMapIndex * 3,
-    bulletSpeed: 205 + targetMapIndex * 18,
-    contactDamage: 15 + targetMapIndex * 5,
-    volley: 3 + Math.floor(targetMapIndex / 2),
+    bulletDamage: 8 + targetMapIndex * 3 + Math.floor(targetStage / 8),
+    bulletSpeed: 200 + targetMapIndex * 16 + targetStage * 1.6,
+    contactDamage: 14 + targetMapIndex * 5 + Math.floor(targetStage / 6),
+    volley: 3 + Math.floor(targetStage / 20),
     pulse: 0
   });
   addParticles(world.width / 2, arenaTop + 170, targetMap.edge, 64);
@@ -832,11 +860,17 @@ function spawnBoss(targetMapIndex) {
 }
 
 function clearBoss(enemy) {
-  if (!enemy.boss || bossTargetMapIndex == null) return;
+  if (!enemy.boss) return;
 
-  unlockedMapIndex = bossTargetMapIndex;
-  currentMapIndex = unlockedMapIndex;
+  if (bossTargetMapIndex != null) {
+    unlockedMapIndex = bossTargetMapIndex;
+    currentMapIndex = unlockedMapIndex;
+  }
+  if (bossTargetStage != null) {
+    clearedBossStage = Math.max(clearedBossStage, bossTargetStage);
+  }
   bossTargetMapIndex = null;
+  bossTargetStage = null;
   bossActive = false;
   rewardPending = true;
   enemyBullets = [];
@@ -1013,20 +1047,21 @@ function spawnEnemy() {
   const type = chooseEnemyType();
   const spec = enemyTypes[type];
   const levelBonus = Math.floor(wave / 3);
+  const stage = stageDifficulty();
   enemies.push({
     type,
     x,
     y,
     radius: spec.radius,
-    health: spec.health + levelBonus + currentMapIndex * 2,
-    maxHealth: spec.health + levelBonus + currentMapIndex * 2,
-    speed: spec.speed + wave * 4 + currentMapIndex * 10,
+    health: spec.health + levelBonus + currentMapIndex * 2 + Math.floor(stage / 5),
+    maxHealth: spec.health + levelBonus + currentMapIndex * 2 + Math.floor(stage / 5),
+    speed: spec.speed + wave * 4 + currentMapIndex * 10 + stage * 0.9,
     color: spec.color,
     stopDistance: spec.stop,
     scoreValue: spec.score + currentMapIndex * 4,
-    contactDamage: 10 + currentMapIndex * 3 + Math.floor(wave / 5),
-    bulletDamage: 9 + currentMapIndex * 2 + Math.floor(wave / 6),
-    bulletSpeed: 330 + currentMapIndex * 24,
+    contactDamage: 10 + currentMapIndex * 3 + Math.floor(wave / 5) + Math.floor(stage / 12),
+    bulletDamage: 9 + currentMapIndex * 2 + Math.floor(wave / 6) + Math.floor(stage / 15),
+    bulletSpeed: 330 + currentMapIndex * 24 + stage * 1.2,
     shootCooldown: Math.max(0.45, 0.9 - currentMapIndex * 0.05) + Math.random() * 0.8,
     orbitDir: Math.random() < 0.5 ? -1 : 1
   });
@@ -1087,8 +1122,9 @@ function updateEnemy(enemy, dt) {
         const level = enemy.bossLevel || currentMapIndex + 1;
         const volley = enemy.volley || 3;
         const center = (volley - 1) / 2;
+        const bossBulletRadius = 10 + Math.min(10, Math.floor(level / 12));
         for (let i = 0; i < volley; i += 1) {
-          shootEnemyBullet(enemy, angle + (i - center) * 0.18, enemy.bulletSpeed, 10 + Math.floor(level / 2), enemy.bulletDamage);
+          shootEnemyBullet(enemy, angle + (i - center) * 0.18, enemy.bulletSpeed, bossBulletRadius, enemy.bulletDamage);
         }
         if (level >= 4) {
           shootEnemyBullet(enemy, angle + Math.PI * 0.5, enemy.bulletSpeed * 0.86, 9, Math.max(12, enemy.bulletDamage - 3));
@@ -1214,7 +1250,7 @@ function startMusic() {
 function shoot() {
   if (bulletTimer > 0 || gameState !== "playing" || gameOver) return;
 
-  const tier = playerTier();
+  const tier = weaponTierValue();
   bulletTimer = Math.max(0.1, currentUnit().fireDelay - player.power * 0.018);
   const spread = Math.min(3, Math.floor(player.power / 3));
   const damage = attackDamage(1 + Math.floor(player.power / 4) + Math.floor((tier - 1) / 3));
@@ -1354,7 +1390,7 @@ function update(dt) {
   spawnTimer -= dt;
   if (spawnTimer <= 0) {
     spawnEnemy();
-    spawnTimer = Math.max(0.22, 1.25 - wave * 0.055 - currentMapIndex * 0.08);
+    spawnTimer = Math.max(0.18, 1.25 - wave * 0.045 - currentMapIndex * 0.08 - playerTier() * 0.004);
   }
 
   itemTimer -= dt;
@@ -1799,7 +1835,7 @@ function drawPlayer() {
 
 function drawUnitBody() {
   const unit = units[selectedUnit];
-  const tier = playerTier();
+  const tier = visualTierValue();
   ctx.fillStyle = unit.color;
   ctx.strokeStyle = "#f8fafc";
   ctx.lineWidth = 3 + tier;
