@@ -11,8 +11,11 @@ On iPhone Safari, use Share -> Add to Home Screen to run it like an app.
 ## Features
 
 - Choose a unit before the game starts: Tank, Jet, Rover, Ship, Mech, Drone, Speeder, or Walker
+- The unit selection screen shows strength, speed, defense, durability, power, and special skill details
+- Each unit has distinct combat tuning for attack, movement, defense, health, and starting power
 - Units visually upgrade as score tiers increase
-- Left joystick moves, right button shoots
+- Left joystick moves, right button shoots, and the yellow SP button uses a charged special skill
+- A yellow special gauge sits under the health bar and fills from kills and pickups
 - The top HUD area is blocked off inside the arena
 - Collect blue cubes for stronger shots
 - Collect orange missile items for burst shots and blue shield items for temporary protection

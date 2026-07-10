@@ -8,9 +8,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Jeongwoo Battle">
   <title>Jeongwoo Battle</title>
-  <link rel="manifest" href="./manifest.webmanifest?v=10">
+  <link rel="manifest" href="./manifest.webmanifest?v=11">
   <link rel="apple-touch-icon" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=10">
+  <link rel="stylesheet" href="./styles.css?v=11">
 </head>
 <body>
   <main class="game-shell">
@@ -32,6 +32,19 @@
           <option value="walker">Walker</option>
         </select>
       </label>
+      <section class="unit-card" aria-live="polite">
+        <div>
+          <span class="label">Selected Unit</span>
+          <strong id="unitName">Tank</strong>
+          <p id="unitRole">Balanced front-line unit</p>
+        </div>
+        <div id="statRows" class="stat-rows"></div>
+        <div class="special-preview">
+          <span class="label">Special</span>
+          <strong id="specialName">Iron Barrage</strong>
+          <p id="specialDescription">Launches a defensive missile burst.</p>
+        </div>
+      </section>
       <button id="startButton" class="primary-action" type="button">Start Game</button>
     </section>
 
@@ -53,6 +66,9 @@
     <section class="health">
       <div id="healthBar"></div>
     </section>
+    <section class="special-meter" aria-label="Special skill energy">
+      <div id="specialBar"></div>
+    </section>
 
     <section id="gameOverPanel" class="end-panel" hidden>
       <h2>Game Over</h2>
@@ -71,8 +87,9 @@
       <div id="moveKnob"></div>
     </div>
     <button id="shootButton" class="shoot" type="button" aria-label="Shoot">FIRE</button>
+    <button id="specialButton" class="special" type="button" aria-label="Use special skill">SP</button>
   </main>
 
-  <script src="./app.js?v=10" defer></script>
+  <script src="./app.js?v=11" defer></script>
 </body>
 </html>

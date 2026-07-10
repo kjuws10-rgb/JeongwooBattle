@@ -5,6 +5,7 @@ const scoreEl = document.querySelector("#score");
 const waveEl = document.querySelector("#wave");
 const powerEl = document.querySelector("#power");
 const healthBar = document.querySelector("#healthBar");
+const specialBar = document.querySelector("#specialBar");
 const startPanel = document.querySelector("#startPanel");
 const startButton = document.querySelector("#startButton");
 const gameOverPanel = document.querySelector("#gameOverPanel");
@@ -14,9 +15,15 @@ const restartButton = document.querySelector("#restartButton");
 const moveStick = document.querySelector("#moveStick");
 const moveKnob = document.querySelector("#moveKnob");
 const shootButton = document.querySelector("#shootButton");
+const specialButton = document.querySelector("#specialButton");
 const playerNameInput = document.querySelector("#playerName");
 const unitSelect = document.querySelector("#unitSelect");
 const scoreList = document.querySelector("#scoreList");
+const unitName = document.querySelector("#unitName");
+const unitRole = document.querySelector("#unitRole");
+const statRows = document.querySelector("#statRows");
+const specialName = document.querySelector("#specialName");
+const specialDescription = document.querySelector("#specialDescription");
 
 const world = { width: 900, height: 1500 };
 const arenaTop = 176;
@@ -24,15 +31,55 @@ const input = { x: 0, y: 0, shooting: false };
 const keys = new Set();
 const storageKey = "jeongwoo-battle-records-v1";
 const units = {
-  tank: { label: "Tank", radius: 32, speed: 300, maxHealth: 130, fireDelay: 0.3, color: "#38bdf8", shot: "#fde047" },
-  jet: { label: "Jet", radius: 25, speed: 410, maxHealth: 82, fireDelay: 0.22, color: "#f97316", shot: "#fdba74" },
-  rover: { label: "Rover", radius: 28, speed: 360, maxHealth: 105, fireDelay: 0.24, color: "#22c55e", shot: "#bbf7d0" },
-  ship: { label: "Ship", radius: 34, speed: 280, maxHealth: 150, fireDelay: 0.34, color: "#a855f7", shot: "#e9d5ff" },
-  mech: { label: "Mech", radius: 35, speed: 285, maxHealth: 170, fireDelay: 0.36, color: "#f43f5e", shot: "#fecdd3" },
-  drone: { label: "Drone", radius: 23, speed: 430, maxHealth: 78, fireDelay: 0.2, color: "#14b8a6", shot: "#99f6e4" },
-  speeder: { label: "Speeder", radius: 24, speed: 465, maxHealth: 72, fireDelay: 0.26, color: "#eab308", shot: "#fef08a" },
-  walker: { label: "Walker", radius: 33, speed: 310, maxHealth: 145, fireDelay: 0.29, color: "#64748b", shot: "#cbd5e1" }
+  tank: {
+    label: "Tank", role: "Balanced armor with steady firepower", radius: 32, speed: 300, maxHealth: 130, fireDelay: 0.3, color: "#38bdf8", shot: "#fde047",
+    attack: 1.08, defense: 0.88, startPower: 1, stats: { strength: 7, speed: 4, defense: 7, durability: 7, power: 6 },
+    specialName: "Iron Barrage", specialDescription: "Gains a shield and fires a heavy missile circle.", special: "barrage"
+  },
+  jet: {
+    label: "Jet", role: "Fast striker with fragile armor", radius: 25, speed: 410, maxHealth: 82, fireDelay: 0.22, color: "#f97316", shot: "#fdba74",
+    attack: 1.12, defense: 1.12, startPower: 1, stats: { strength: 6, speed: 9, defense: 3, durability: 3, power: 7 },
+    specialName: "Afterburner", specialDescription: "Boosts speed and releases a forward fire fan.", special: "afterburner"
+  },
+  rover: {
+    label: "Rover", role: "Support unit with recovery and stable handling", radius: 28, speed: 360, maxHealth: 105, fireDelay: 0.24, color: "#22c55e", shot: "#bbf7d0",
+    attack: 0.95, defense: 0.94, startPower: 2, stats: { strength: 5, speed: 6, defense: 6, durability: 6, power: 5 },
+    specialName: "Repair Field", specialDescription: "Restores health, raises power, and adds short protection.", special: "repair"
+  },
+  ship: {
+    label: "Ship", role: "Heavy saucer with strong survival stats", radius: 34, speed: 280, maxHealth: 150, fireDelay: 0.34, color: "#a855f7", shot: "#e9d5ff",
+    attack: 1.02, defense: 0.82, startPower: 1, stats: { strength: 6, speed: 3, defense: 8, durability: 8, power: 6 },
+    specialName: "Gravity Wave", specialDescription: "Damages nearby enemies and pushes danger away.", special: "gravity"
+  },
+  mech: {
+    label: "Mech", role: "Slow assault frame with the highest toughness", radius: 35, speed: 285, maxHealth: 170, fireDelay: 0.36, color: "#f43f5e", shot: "#fecdd3",
+    attack: 1.25, defense: 0.78, startPower: 1, stats: { strength: 9, speed: 3, defense: 9, durability: 10, power: 8 },
+    specialName: "Heavy Salvo", specialDescription: "Launches powerful missiles in every direction.", special: "salvo"
+  },
+  drone: {
+    label: "Drone", role: "Tiny high-tech unit with fast special charging", radius: 23, speed: 430, maxHealth: 78, fireDelay: 0.2, color: "#14b8a6", shot: "#99f6e4",
+    attack: 0.92, defense: 1.16, startPower: 2, stats: { strength: 4, speed: 9, defense: 3, durability: 3, power: 9 },
+    specialName: "Swarm Burst", specialDescription: "Releases rapid shots around the drone.", special: "swarm", specialGain: 1.18
+  },
+  speeder: {
+    label: "Speeder", role: "Extreme mobility with risky low durability", radius: 24, speed: 465, maxHealth: 72, fireDelay: 0.26, color: "#eab308", shot: "#fef08a",
+    attack: 1.0, defense: 1.2, startPower: 1, stats: { strength: 5, speed: 10, defense: 2, durability: 2, power: 6 },
+    specialName: "Time Dash", specialDescription: "Becomes briefly invulnerable and clears enemy bullets.", special: "dash"
+  },
+  walker: {
+    label: "Walker", role: "Defensive walker with strong close-range control", radius: 33, speed: 310, maxHealth: 145, fireDelay: 0.29, color: "#64748b", shot: "#cbd5e1",
+    attack: 1.04, defense: 0.8, startPower: 1, stats: { strength: 6, speed: 4, defense: 9, durability: 8, power: 5 },
+    specialName: "Guard Stomp", specialDescription: "Creates a shockwave, shields the unit, and heals slightly.", special: "stomp"
+  }
 };
+const statLabels = {
+  strength: "힘",
+  speed: "스피드",
+  defense: "방어력",
+  durability: "맷집",
+  power: "파워"
+};
+const specialMax = 100;
 const itemSettings = {
   fieldSpawnBase: 13,
   fieldSpawnVariance: 8,
@@ -179,7 +226,8 @@ const player = {
   angle: -Math.PI / 2,
   invulnerable: 0,
   terrainCooldown: 0,
-  boostTime: 0
+  boostTime: 0,
+  specialCharge: 0
 };
 
 let bullets = [];
@@ -209,13 +257,14 @@ function resetRoundState() {
   player.speed = unit.speed;
   player.maxHealth = unit.maxHealth;
   player.health = unit.maxHealth;
-  player.power = 1;
+  player.power = unit.startPower || 1;
   player.missiles = 0;
   player.shieldTime = 0;
   player.angle = -Math.PI / 2;
   player.invulnerable = 0;
   player.terrainCooldown = 0;
   player.boostTime = 0;
+  player.specialCharge = 0;
   bullets = [];
   enemyBullets = [];
   enemies = [];
@@ -236,6 +285,7 @@ function resetRoundState() {
   gameOver = false;
   rebuildDynamicTerrain();
   updateHud();
+  updateUnitPreview();
   renderRecords();
 }
 
@@ -263,6 +313,153 @@ function updateHud() {
   waveEl.textContent = bossActive ? `Boss -> ${maps[bossTargetMapIndex].name}` : `${currentMap().name} L${playerTier()}`;
   powerEl.textContent = `P${player.power} M${player.missiles} S${Math.ceil(player.shieldTime)}`;
   healthBar.style.width = `${Math.max(0, (player.health / player.maxHealth) * 100)}%`;
+  specialBar.style.width = `${Math.max(0, (player.specialCharge / specialMax) * 100)}%`;
+  specialButton.classList.toggle("is-ready", player.specialCharge >= specialMax);
+  specialButton.disabled = player.specialCharge < specialMax || gameState !== "playing";
+}
+
+function updateUnitPreview() {
+  const unit = units[unitSelect.value] || units.tank;
+  unitName.textContent = unit.label;
+  unitRole.textContent = unit.role;
+  specialName.textContent = unit.specialName;
+  specialDescription.textContent = unit.specialDescription;
+  statRows.innerHTML = "";
+
+  Object.entries(unit.stats).forEach(([key, value]) => {
+    const row = document.createElement("div");
+    row.className = "stat-row";
+
+    const label = document.createElement("span");
+    label.textContent = statLabels[key] || key;
+
+    const track = document.createElement("span");
+    track.className = "stat-track";
+    const fill = document.createElement("span");
+    fill.className = "stat-fill";
+    fill.style.width = `${value * 10}%`;
+    track.appendChild(fill);
+
+    const scoreText = document.createElement("span");
+    scoreText.textContent = value;
+
+    row.append(label, track, scoreText);
+    statRows.appendChild(row);
+  });
+}
+
+function currentUnit() {
+  return units[selectedUnit] || units.tank;
+}
+
+function attackDamage(base) {
+  return Math.max(1, Math.round(base * currentUnit().attack));
+}
+
+function takeDamage(amount) {
+  player.health -= Math.max(1, Math.round(amount * currentUnit().defense));
+}
+
+function gainSpecial(amount) {
+  const bonus = currentUnit().specialGain || 1;
+  player.specialCharge = Math.min(specialMax, player.specialCharge + amount * bonus);
+}
+
+function fireRadialShots(count, speed, damage, radius, missile = false) {
+  for (let i = 0; i < count; i += 1) {
+    const angle = (Math.PI * 2 * i) / count;
+    bullets.push({
+      x: player.x + Math.cos(angle) * (player.radius + 12),
+      y: player.y + Math.sin(angle) * (player.radius + 12),
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      radius,
+      damage: attackDamage(damage),
+      life: missile ? 1.35 : 0.9,
+      color: currentUnit().shot,
+      missile
+    });
+  }
+}
+
+function damageEnemiesInRadius(radius, damage, push) {
+  enemies.forEach((enemy) => {
+    const dist = distance(player, enemy);
+    if (dist > radius) return;
+
+    enemy.health -= attackDamage(enemy.boss ? damage * 0.65 : damage);
+    if (push > 0 && dist > 1) {
+      const force = ((radius - dist) / radius) * push;
+      enemy.x += ((enemy.x - player.x) / dist) * force;
+      enemy.y += ((enemy.y - player.y) / dist) * force;
+      clampToArena(enemy);
+      resolveCircleObstacles(enemy);
+    }
+    addParticles(enemy.x, enemy.y, currentUnit().shot, 8);
+  });
+}
+
+function useSpecial() {
+  if (gameState !== "playing" || gameOver || player.specialCharge < specialMax) return;
+
+  ensureAudio();
+  const unit = currentUnit();
+  player.specialCharge = 0;
+  addParticles(player.x, player.y, unit.shot, 34);
+
+  if (unit.special === "barrage") {
+    player.shieldTime = Math.max(player.shieldTime, 7);
+    fireRadialShots(10, 590, 5 + player.power, 14, true);
+    playTone(120, 0.2, "sawtooth", 0.09);
+  } else if (unit.special === "afterburner") {
+    player.boostTime = Math.max(player.boostTime, 5.5);
+    for (let i = -4; i <= 4; i += 1) {
+      const angle = player.angle + i * 0.16;
+      bullets.push({
+        x: player.x + Math.cos(angle) * 42,
+        y: player.y + Math.sin(angle) * 42,
+        vx: Math.cos(angle) * 900,
+        vy: Math.sin(angle) * 900,
+        radius: 9,
+        damage: attackDamage(3 + Math.floor(player.power / 2)),
+        life: 0.75,
+        color: unit.shot
+      });
+    }
+    playTone(760, 0.12, "square", 0.08);
+  } else if (unit.special === "repair") {
+    player.health = Math.min(player.maxHealth, player.health + Math.round(player.maxHealth * 0.38));
+    player.power += 1;
+    player.shieldTime = Math.max(player.shieldTime, 4);
+    playTone(840, 0.16, "triangle", 0.08);
+  } else if (unit.special === "gravity") {
+    damageEnemiesInRadius(280, 8 + player.power, 90);
+    enemyBullets = enemyBullets.filter((bullet) => distance(player, bullet) > 320);
+    player.invulnerable = Math.max(player.invulnerable, 1);
+    playTone(180, 0.24, "sine", 0.09);
+  } else if (unit.special === "salvo") {
+    fireRadialShots(14, 540, 8 + player.power, 16, true);
+    player.missiles += 2;
+    playTone(92, 0.28, "sawtooth", 0.1);
+  } else if (unit.special === "swarm") {
+    fireRadialShots(18, 820, 3 + Math.floor(player.power / 2), 7, false);
+    window.setTimeout(() => fireRadialShots(18, 760, 2 + Math.floor(player.power / 2), 7, false), 130);
+    playTone(980, 0.1, "square", 0.075);
+  } else if (unit.special === "dash") {
+    player.boostTime = Math.max(player.boostTime, 6.5);
+    player.invulnerable = Math.max(player.invulnerable, 2.1);
+    enemyBullets = [];
+    fireRadialShots(8, 860, 3 + player.power, 8, false);
+    playTone(1120, 0.12, "triangle", 0.08);
+  } else if (unit.special === "stomp") {
+    player.shieldTime = Math.max(player.shieldTime, 6);
+    player.health = Math.min(player.maxHealth, player.health + 18);
+    damageEnemiesInRadius(235, 7 + player.power, 120);
+    playTone(140, 0.22, "sawtooth", 0.09);
+  }
+
+  updateMapByScore();
+  updateHud();
 }
 
 function clamp(value, min, max) {
@@ -737,9 +934,9 @@ function startMusic() {
 function shoot() {
   if (bulletTimer > 0 || gameState !== "playing" || gameOver) return;
 
-  bulletTimer = Math.max(0.1, units[selectedUnit].fireDelay - player.power * 0.018);
+  bulletTimer = Math.max(0.1, currentUnit().fireDelay - player.power * 0.018);
   const spread = Math.min(3, Math.floor(player.power / 3));
-  const damage = 1 + Math.floor(player.power / 4);
+  const damage = attackDamage(1 + Math.floor(player.power / 4));
   playTone(420, 0.06, "square", 0.04);
 
   for (let i = -spread; i <= spread; i += 1) {
@@ -752,7 +949,7 @@ function shoot() {
       radius: 8,
       damage,
       life: 0.8,
-      color: units[selectedUnit].shot
+      color: currentUnit().shot
     });
   }
 
@@ -764,7 +961,7 @@ function shoot() {
       vx: Math.cos(player.angle) * 560,
       vy: Math.sin(player.angle) * 560,
       radius: 15,
-      damage: 5 + Math.floor(player.power / 2),
+      damage: attackDamage(5 + Math.floor(player.power / 2)),
       life: 1.3,
       missile: true
     });
@@ -897,7 +1094,7 @@ function update(dt) {
         addParticles(bullet.x, bullet.y, "#93c5fd", 10);
         playTone(520, 0.08, "sine", 0.05);
       } else {
-        player.health -= bullet.damage;
+        takeDamage(bullet.damage);
         player.invulnerable = 0.45;
         addParticles(player.x, player.y, "#ef4444", 14);
         playTone(160, 0.12, "sawtooth", 0.07);
@@ -910,6 +1107,7 @@ function update(dt) {
   const defeated = enemies.filter((enemy) => enemy.health <= 0);
   defeated.forEach((enemy) => {
     score += enemy.scoreValue || 10;
+    gainSpecial(enemy.boss ? 35 : 6);
     const roll = Math.random();
     const missileLimit = itemSettings.dropCubeChance + itemSettings.dropMissileChance;
     const shieldLimit = missileLimit + itemSettings.dropShieldChance;
@@ -935,7 +1133,7 @@ function update(dt) {
         addParticles(enemy.x, enemy.y, "#93c5fd", 12);
         playTone(520, 0.08, "sine", 0.05);
       } else {
-        player.health -= enemy.boss ? 18 : 10;
+        takeDamage(enemy.boss ? 18 : 10);
         playTone(140, 0.13, "sawtooth", 0.08);
       }
       player.invulnerable = 0.55;
@@ -947,9 +1145,10 @@ function update(dt) {
   cubes = cubes.filter((cube) => {
     if (distance(player, cube) < player.radius + cube.radius + 8) {
       player.power += 1;
-      player.maxHealth = Math.min(140, player.maxHealth + 2);
+      player.maxHealth = Math.min(currentUnit().maxHealth + 24, player.maxHealth + 2);
       player.health = Math.min(player.maxHealth, player.health + 7);
       score += 5;
+      gainSpecial(5);
       addParticles(cube.x, cube.y, "#38bdf8", 10);
       playTone(820, 0.09, "triangle", 0.05);
       updateMapByScore();
@@ -967,10 +1166,12 @@ function update(dt) {
     if (distance(player, item) < player.radius + item.radius + 10) {
       if (item.type === "missile") {
         player.missiles += 3;
+        gainSpecial(8);
         addParticles(item.x, item.y, "#fb923c", 18);
         playTone(980, 0.08, "square", 0.055);
       } else {
         player.shieldTime = Math.max(player.shieldTime, 8);
+        gainSpecial(8);
         addParticles(item.x, item.y, "#93c5fd", 20);
         playTone(620, 0.18, "sine", 0.055);
       }
@@ -1661,6 +1862,22 @@ shootButton.addEventListener("pointercancel", () => {
   input.shooting = false;
 });
 
+specialButton.addEventListener("pointerdown", (event) => {
+  if (gameState !== "playing") return;
+  event.preventDefault();
+  specialButton.setPointerCapture(event.pointerId);
+  useSpecial();
+});
+
+specialButton.addEventListener("pointerup", (event) => {
+  event.preventDefault();
+  if (specialButton.hasPointerCapture(event.pointerId)) {
+    specialButton.releasePointerCapture(event.pointerId);
+  }
+});
+
+specialButton.addEventListener("pointercancel", () => {});
+
 startButton.addEventListener("click", startGame);
 
 saveScoreButton.addEventListener("click", saveScoreRecord);
@@ -1676,6 +1893,7 @@ unitSelect.addEventListener("change", () => {
   }
   selectedUnit = unitSelect.value;
   resetRoundState();
+  updateUnitPreview();
 });
 
 playerNameInput.addEventListener("input", () => {
@@ -1685,6 +1903,11 @@ playerNameInput.addEventListener("input", () => {
 
 window.addEventListener("keydown", (event) => {
   if (gameState === "playing") ensureAudio();
+  if ((event.key === "e" || event.key === "E") && gameState === "playing") {
+    event.preventDefault();
+    useSpecial();
+    return;
+  }
   keys.add(event.key);
 });
 window.addEventListener("keyup", (event) => keys.delete(event.key));
