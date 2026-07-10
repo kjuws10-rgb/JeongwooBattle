@@ -1,10 +1,10 @@
-const CACHE_NAME = "jeongwoo-battle-v11";
+const CACHE_NAME = "jeongwoo-battle-v12";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=11",
-  "./app.js?v=11",
-  "./manifest.webmanifest?v=11",
+  "./styles.css?v=12",
+  "./app.js?v=12",
+  "./manifest.webmanifest?v=12",
   "./icon.svg"
 ];
 
@@ -24,7 +24,10 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
     caches.match(event.request).then((cached) =>
-      cached || fetch(event.request).catch(() => caches.match("./index.html"))
+      cached || fetch(event.request).catch(() => {
+        if (event.request.mode === "navigate") return caches.match("./index.html");
+        return caches.match(event.request);
+      })
     )
   );
 });

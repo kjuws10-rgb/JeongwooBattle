@@ -86,6 +86,8 @@ select {
   background: var(--panel);
   backdrop-filter: blur(10px);
   z-index: 4;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
 }
 
 .start-panel {
@@ -337,6 +339,9 @@ select {
 }
 
 .game-shell.is-ended .stick,
+.game-shell.is-ended .hud,
+.game-shell.is-ended .health,
+.game-shell.is-ended .special-meter,
 .game-shell.is-ended .shoot,
 .game-shell.is-ended .special {
   display: none;

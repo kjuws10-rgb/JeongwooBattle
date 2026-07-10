@@ -316,6 +316,8 @@ function updateHud() {
   specialBar.style.width = `${Math.max(0, (player.specialCharge / specialMax) * 100)}%`;
   specialButton.classList.toggle("is-ready", player.specialCharge >= specialMax);
   specialButton.disabled = player.specialCharge < specialMax || gameState !== "playing";
+  specialButton.title = player.specialCharge >= specialMax ? `${currentUnit().specialName} ready` : `${currentUnit().specialName} charging`;
+  specialButton.setAttribute("aria-label", specialButton.title);
 }
 
 function updateUnitPreview() {
@@ -324,6 +326,8 @@ function updateUnitPreview() {
   unitRole.textContent = unit.role;
   specialName.textContent = unit.specialName;
   specialDescription.textContent = unit.specialDescription;
+  specialButton.title = `${unit.specialName} charging`;
+  specialButton.setAttribute("aria-label", specialButton.title);
   statRows.innerHTML = "";
 
   Object.entries(unit.stats).forEach(([key, value]) => {
@@ -366,6 +370,8 @@ function gainSpecial(amount) {
 }
 
 function fireRadialShots(count, speed, damage, radius, missile = false) {
+  if (gameState !== "playing" || gameOver) return;
+
   for (let i = 0; i < count; i += 1) {
     const angle = (Math.PI * 2 * i) / count;
     bullets.push({

@@ -1,6 +1,6 @@
 {
-  "name": "정우배틀",
-  "short_name": "정우배틀",
+  "name": "Jeongwoo Battle",
+  "short_name": "Jeongwoo",
   "description": "Mobile arena shooter test game.",
   "start_url": "./",
   "scope": "./",
@@ -17,4 +17,3 @@
     }
   ]
 }
-
