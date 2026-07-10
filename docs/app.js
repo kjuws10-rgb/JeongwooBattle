@@ -618,7 +618,7 @@ function spawnBoss(targetMapIndex) {
     scoreValue: 100 + targetMapIndex * 55,
     shootCooldown: 0.85,
     bulletDamage: 14 + targetMapIndex * 4,
-    bulletSpeed: 330 + targetMapIndex * 36,
+    bulletSpeed: 245 + targetMapIndex * 24,
     contactDamage: 22 + targetMapIndex * 7,
     volley: 3 + Math.floor(targetMapIndex / 2),
     pulse: 0
