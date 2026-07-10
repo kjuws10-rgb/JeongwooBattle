@@ -35,80 +35,80 @@ const keys = new Set();
 const storageKey = "jeongwoo-battle-records-v1";
 const units = {
   tank: {
-    label: "Tank", role: "Balanced armor with steady firepower", radius: 32, speed: 300, maxHealth: 165, fireDelay: 0.3, color: "#38bdf8", shot: "#fde047",
+    label: "탱크", role: "화력과 방어가 균형 잡힌 전방 유닛", radius: 32, speed: 300, maxHealth: 165, fireDelay: 0.3, color: "#38bdf8", shot: "#fde047",
     attack: 1.08, defense: 0.88, startPower: 1, stats: { strength: 7, speed: 4, defense: 7, durability: 8, power: 6 },
-    specialName: "Iron Barrage", specialDescription: "Gains a shield and fires a heavy missile circle.", special: "barrage"
+    specialName: "강철 포격", specialDescription: "보호막을 얻고 강력한 미사일 원형 폭격을 발사합니다.", special: "barrage"
   },
   jet: {
-    label: "Jet", role: "Fast striker with fragile armor", radius: 25, speed: 410, maxHealth: 112, fireDelay: 0.22, color: "#f97316", shot: "#fdba74",
+    label: "전투기", role: "빠르지만 장갑이 약한 고속 공격 유닛", radius: 25, speed: 410, maxHealth: 112, fireDelay: 0.22, color: "#f97316", shot: "#fdba74",
     attack: 1.12, defense: 1.12, startPower: 1, stats: { strength: 6, speed: 9, defense: 3, durability: 4, power: 7 },
-    specialName: "Afterburner", specialDescription: "Boosts speed and releases a forward fire fan.", special: "afterburner"
+    specialName: "애프터버너", specialDescription: "속도를 높이고 전방으로 넓은 탄막을 발사합니다.", special: "afterburner"
   },
   rover: {
-    label: "Rover", role: "Support unit with recovery and stable handling", radius: 28, speed: 360, maxHealth: 140, fireDelay: 0.24, color: "#22c55e", shot: "#bbf7d0",
+    label: "로버", role: "회복과 안정적인 조작이 강점인 지원 유닛", radius: 28, speed: 360, maxHealth: 140, fireDelay: 0.24, color: "#22c55e", shot: "#bbf7d0",
     attack: 0.95, defense: 0.94, startPower: 2, stats: { strength: 5, speed: 6, defense: 6, durability: 7, power: 5 },
-    specialName: "Repair Field", specialDescription: "Restores health, raises power, and adds short protection.", special: "repair"
+    specialName: "수리장", specialDescription: "에너지를 회복하고 파워를 올리며 짧은 보호를 얻습니다.", special: "repair"
   },
   ship: {
-    label: "Ship", role: "Heavy saucer with strong survival stats", radius: 34, speed: 280, maxHealth: 190, fireDelay: 0.34, color: "#a855f7", shot: "#e9d5ff",
+    label: "전함", role: "생존력이 강한 중장갑 비행 유닛", radius: 34, speed: 280, maxHealth: 190, fireDelay: 0.34, color: "#a855f7", shot: "#e9d5ff",
     attack: 1.02, defense: 0.82, startPower: 1, stats: { strength: 6, speed: 3, defense: 8, durability: 9, power: 6 },
-    specialName: "Gravity Wave", specialDescription: "Damages nearby enemies and pushes danger away.", special: "gravity"
+    specialName: "중력파", specialDescription: "주변 적에게 피해를 주고 위험을 밀어냅니다.", special: "gravity"
   },
   mech: {
-    label: "Mech", role: "Slow assault frame with the highest toughness", radius: 35, speed: 285, maxHealth: 220, fireDelay: 0.36, color: "#f43f5e", shot: "#fecdd3",
+    label: "메카", role: "느리지만 가장 단단한 돌격 프레임", radius: 35, speed: 285, maxHealth: 220, fireDelay: 0.36, color: "#f43f5e", shot: "#fecdd3",
     attack: 1.25, defense: 0.78, startPower: 1, stats: { strength: 9, speed: 3, defense: 9, durability: 10, power: 8 },
-    specialName: "Heavy Salvo", specialDescription: "Launches powerful missiles in every direction.", special: "salvo"
+    specialName: "중화기 일제사격", specialDescription: "모든 방향으로 강력한 미사일을 발사합니다.", special: "salvo"
   },
   drone: {
-    label: "Drone", role: "Tiny high-tech unit with fast special charging", radius: 23, speed: 430, maxHealth: 105, fireDelay: 0.2, color: "#14b8a6", shot: "#99f6e4",
+    label: "드론", role: "스페셜 충전이 빠른 소형 고기동 유닛", radius: 23, speed: 430, maxHealth: 105, fireDelay: 0.2, color: "#14b8a6", shot: "#99f6e4",
     attack: 0.92, defense: 1.16, startPower: 2, stats: { strength: 4, speed: 9, defense: 3, durability: 4, power: 9 },
-    specialName: "Swarm Burst", specialDescription: "Releases rapid shots around the drone.", special: "swarm", specialGain: 1.18
+    specialName: "군집 폭발", specialDescription: "주변으로 고속 탄막을 방출합니다.", special: "swarm", specialGain: 1.18
   },
   speeder: {
-    label: "Speeder", role: "Extreme mobility with risky low durability", radius: 24, speed: 465, maxHealth: 98, fireDelay: 0.26, color: "#eab308", shot: "#fef08a",
+    label: "스피더", role: "생존력은 낮지만 극단적으로 빠른 유닛", radius: 24, speed: 465, maxHealth: 98, fireDelay: 0.26, color: "#eab308", shot: "#fef08a",
     attack: 1.0, defense: 1.2, startPower: 1, stats: { strength: 5, speed: 10, defense: 2, durability: 3, power: 6 },
-    specialName: "Time Dash", specialDescription: "Becomes briefly invulnerable and clears enemy bullets.", special: "dash"
+    specialName: "시간 질주", specialDescription: "잠시 무적이 되고 적 탄환을 제거합니다.", special: "dash"
   },
   walker: {
-    label: "Walker", role: "Defensive walker with strong close-range control", radius: 33, speed: 310, maxHealth: 185, fireDelay: 0.29, color: "#64748b", shot: "#cbd5e1",
+    label: "워커", role: "근거리 제압이 강한 방어형 보행 유닛", radius: 33, speed: 310, maxHealth: 185, fireDelay: 0.29, color: "#64748b", shot: "#cbd5e1",
     attack: 1.04, defense: 0.8, startPower: 1, stats: { strength: 6, speed: 4, defense: 9, durability: 9, power: 5 },
-    specialName: "Guard Stomp", specialDescription: "Creates a shockwave, shields the unit, and heals slightly.", special: "stomp"
+    specialName: "방어 충격파", specialDescription: "충격파를 만들고 보호막과 소량 회복을 얻습니다.", special: "stomp"
   },
   phantom: {
-    label: "Phantom", role: "Stealth striker with sharp burst damage", radius: 24, speed: 445, maxHealth: 115, fireDelay: 0.21, color: "#8b5cf6", shot: "#ddd6fe",
+    label: "팬텀", role: "순간 화력이 강한 은신형 타격 유닛", radius: 24, speed: 445, maxHealth: 115, fireDelay: 0.21, color: "#8b5cf6", shot: "#ddd6fe",
     attack: 1.18, defense: 1.08, startPower: 1, stats: { strength: 8, speed: 9, defense: 4, durability: 4, power: 8 },
-    specialName: "Phase Cut", specialDescription: "Clears bullets, dashes safely, and fires piercing shots.", special: "dash"
+    specialName: "위상 절단", specialDescription: "탄환을 지우고 안전하게 질주하며 관통탄을 날립니다.", special: "dash"
   },
   titan: {
-    label: "Titan", role: "Massive siege unit with extreme energy", radius: 38, speed: 255, maxHealth: 260, fireDelay: 0.39, color: "#b91c1c", shot: "#fecaca",
+    label: "타이탄", role: "압도적인 에너지를 가진 초중장갑 공성 유닛", radius: 38, speed: 255, maxHealth: 260, fireDelay: 0.39, color: "#b91c1c", shot: "#fecaca",
     attack: 1.32, defense: 0.72, startPower: 1, stats: { strength: 10, speed: 2, defense: 10, durability: 10, power: 7 },
-    specialName: "Titan Salvo", specialDescription: "Launches heavy missiles and gains extra protection.", special: "salvo"
+    specialName: "타이탄 포화", specialDescription: "중미사일을 발사하고 추가 보호를 얻습니다.", special: "salvo"
   },
   medic: {
-    label: "Medic", role: "Recovery unit that keeps energy high", radius: 27, speed: 350, maxHealth: 150, fireDelay: 0.25, color: "#10b981", shot: "#a7f3d0",
+    label: "메딕", role: "에너지를 안정적으로 유지하는 회복 유닛", radius: 27, speed: 350, maxHealth: 150, fireDelay: 0.25, color: "#10b981", shot: "#a7f3d0",
     attack: 0.9, defense: 0.92, startPower: 2, stats: { strength: 4, speed: 6, defense: 7, durability: 8, power: 6 },
-    specialName: "Full Restore", specialDescription: "Restores energy and adds shield time.", special: "repair", specialGain: 1.12
+    specialName: "완전 수복", specialDescription: "에너지를 회복하고 보호 시간을 추가합니다.", special: "repair", specialGain: 1.12
   },
   artillery: {
-    label: "Artillery", role: "Long range unit with powerful missiles", radius: 31, speed: 285, maxHealth: 155, fireDelay: 0.33, color: "#f59e0b", shot: "#fde68a",
+    label: "포병", role: "강력한 미사일을 쓰는 장거리 유닛", radius: 31, speed: 285, maxHealth: 155, fireDelay: 0.33, color: "#f59e0b", shot: "#fde68a",
     attack: 1.28, defense: 0.9, startPower: 1, stats: { strength: 9, speed: 3, defense: 6, durability: 7, power: 9 },
-    specialName: "Bombardment", specialDescription: "Fires a wide upgraded missile barrage.", special: "barrage"
+    specialName: "대폭격", specialDescription: "강화 미사일을 넓게 퍼뜨려 발사합니다.", special: "barrage"
   },
   blade: {
-    label: "Blade", role: "Close range speed unit with high control", radius: 25, speed: 485, maxHealth: 120, fireDelay: 0.2, color: "#06b6d4", shot: "#cffafe",
+    label: "블레이드", role: "제어력이 높은 근거리 고속 유닛", radius: 25, speed: 485, maxHealth: 120, fireDelay: 0.2, color: "#06b6d4", shot: "#cffafe",
     attack: 1.08, defense: 1.04, startPower: 1, stats: { strength: 7, speed: 10, defense: 4, durability: 4, power: 7 },
-    specialName: "Blade Dash", specialDescription: "Dashes through danger and sends blades outward.", special: "dash"
+    specialName: "칼날 질주", specialDescription: "위험을 뚫고 질주하며 칼날 탄막을 퍼뜨립니다.", special: "dash"
   },
   nova: {
-    label: "Nova", role: "Energy core unit with strong special control", radius: 29, speed: 365, maxHealth: 145, fireDelay: 0.24, color: "#ec4899", shot: "#fbcfe8",
+    label: "노바", role: "스페셜 제어가 강한 에너지 코어 유닛", radius: 29, speed: 365, maxHealth: 145, fireDelay: 0.24, color: "#ec4899", shot: "#fbcfe8",
     attack: 1.05, defense: 0.98, startPower: 2, stats: { strength: 6, speed: 7, defense: 5, durability: 6, power: 10 },
-    specialName: "Nova Pulse", specialDescription: "Releases a gravity pulse and fills special quickly.", special: "gravity", specialGain: 1.22
+    specialName: "노바 파동", specialDescription: "중력 파동을 방출하고 스페셜을 빠르게 채웁니다.", special: "gravity", specialGain: 1.22
   }
 };
 const statLabels = {
   strength: "힘",
-  speed: "스피드",
-  defense: "방어력",
+  speed: "속도",
+  defense: "방어",
   durability: "맷집",
   power: "파워"
 };
@@ -127,37 +127,37 @@ const itemSettings = {
 };
 const rewardCatalog = [
   {
-    title: "Energy +50%",
-    description: "Restore 50% of max energy.",
+    title: "에너지 50% 회복",
+    description: "최대 에너지의 50%를 회복합니다.",
     apply: () => {
       player.health = Math.min(player.maxHealth, player.health + Math.ceil(player.maxHealth * 0.5));
     }
   },
   {
-    title: "Full Energy",
-    description: "Restore energy to 100%.",
+    title: "에너지 100% 회복",
+    description: "에너지를 가득 채웁니다.",
     apply: () => {
       player.health = player.maxHealth;
     }
   },
   {
-    title: "Special Full",
-    description: "Fill the SP gauge completely.",
+    title: "스페셜 완전 충전",
+    description: "스페셜 게이지를 100% 채웁니다.",
     apply: () => {
       player.specialCharge = specialMax;
     }
   },
   {
-    title: "Missile Upgrade",
-    description: "Gain missiles and increase power.",
+    title: "미사일 강화",
+    description: "미사일을 얻고 파워가 증가합니다.",
     apply: () => {
       player.missiles += 6;
       player.power += 2;
     }
   },
   {
-    title: "Max Energy Core",
-    description: "Increase max energy and heal by the same amount.",
+    title: "최대 에너지 코어",
+    description: "최대 에너지가 증가하고 같은 양만큼 회복합니다.",
     apply: () => {
       const gain = Math.ceil(player.maxHealth * 0.14);
       player.maxHealth += gain;
@@ -165,24 +165,24 @@ const rewardCatalog = [
     }
   },
   {
-    title: "Shield Battery",
-    description: "Gain long shield time and some energy.",
+    title: "보호막 배터리",
+    description: "긴 보호막 시간과 에너지 회복을 얻습니다.",
     apply: () => {
       player.shieldTime = Math.max(player.shieldTime, 14);
       player.health = Math.min(player.maxHealth, player.health + Math.ceil(player.maxHealth * 0.25));
     }
   },
   {
-    title: "Power Surge",
-    description: "Increase power and charge SP.",
+    title: "파워 서지",
+    description: "파워가 증가하고 스페셜이 충전됩니다.",
     apply: () => {
       player.power += 3;
       gainSpecial(35);
     }
   },
   {
-    title: "Overdrive",
-    description: "Temporary speed boost plus missiles.",
+    title: "오버드라이브",
+    description: "일시적인 속도 상승과 미사일을 얻습니다.",
     apply: () => {
       player.boostTime = Math.max(player.boostTime, 10);
       player.missiles += 4;
@@ -191,7 +191,7 @@ const rewardCatalog = [
 ];
 const maps = [
   {
-    name: "Grass",
+    name: "초원",
     minScore: 0,
     bg: "#14532d",
     grid: "rgba(255,255,255,0.08)",
@@ -207,7 +207,7 @@ const maps = [
     ]
   },
   {
-    name: "Desert",
+    name: "사막",
     minScore: 650,
     bg: "#92400e",
     grid: "rgba(254,243,199,0.12)",
@@ -223,7 +223,7 @@ const maps = [
     ]
   },
   {
-    name: "Ice",
+    name: "빙하",
     minScore: 1450,
     bg: "#0e7490",
     grid: "rgba(224,242,254,0.16)",
@@ -239,7 +239,7 @@ const maps = [
     ]
   },
   {
-    name: "Space",
+    name: "우주",
     minScore: 2500,
     bg: "#1e1b4b",
     grid: "rgba(221,214,254,0.16)",
@@ -255,7 +255,7 @@ const maps = [
     ]
   },
   {
-    name: "Nebula",
+    name: "성운",
     minScore: 3900,
     bg: "#581c87",
     grid: "rgba(245,208,254,0.16)",
@@ -271,7 +271,7 @@ const maps = [
     ]
   },
   {
-    name: "Core",
+    name: "코어",
     minScore: 5600,
     bg: "#7f1d1d",
     grid: "rgba(254,202,202,0.15)",
@@ -289,11 +289,11 @@ const maps = [
 ];
 
 const enemyTypes = {
-  chaser: { label: "Chaser", radius: 28, health: 3, speed: 122, color: "#a855f7", stop: 76, score: 10 },
-  sprinter: { label: "Sprinter", radius: 22, health: 2, speed: 208, color: "#f97316", stop: 88, score: 12 },
-  brute: { label: "Brute", radius: 36, health: 7, speed: 84, color: "#ef4444", stop: 92, score: 18 },
-  shooter: { label: "Shooter", radius: 25, health: 4, speed: 96, color: "#06b6d4", stop: 260, score: 16, shoots: true },
-  orbit: { label: "Orbit", radius: 24, health: 3, speed: 132, color: "#eab308", stop: 132, score: 14, orbit: true }
+  chaser: { label: "추격병", radius: 28, health: 3, speed: 122, color: "#a855f7", stop: 76, score: 10 },
+  sprinter: { label: "질주병", radius: 22, health: 2, speed: 208, color: "#f97316", stop: 88, score: 12 },
+  brute: { label: "중장병", radius: 36, health: 7, speed: 84, color: "#ef4444", stop: 92, score: 18 },
+  shooter: { label: "사격병", radius: 25, health: 4, speed: 96, color: "#06b6d4", stop: 260, score: 16, shoots: true },
+  orbit: { label: "회전병", radius: 24, health: 3, speed: 132, color: "#eab308", stop: 132, score: 14, orbit: true }
 };
 
 let lastTime = 0;
@@ -415,25 +415,25 @@ function startGame() {
 
 function updateHud() {
   scoreEl.textContent = score;
-  waveEl.textContent = bossActive ? `Boss -> ${maps[bossTargetMapIndex].name}` : `${currentMap().name} L${playerTier()}`;
+  waveEl.textContent = bossActive ? `보스 -> ${maps[bossTargetMapIndex].name}` : `${currentMap().name} ${playerTier()}단계`;
   const missileType = player.missiles > 0 ? ` ${missileLabel(missileKindForTier(playerTier())).slice(0, 3).toUpperCase()}` : "";
-  powerEl.textContent = `P${player.power} M${player.missiles}${missileType} S${Math.ceil(player.shieldTime)}`;
+  powerEl.textContent = `파워${player.power} 미사일${player.missiles}${missileType} 보호${Math.ceil(player.shieldTime)}`;
   healthBar.style.width = `${Math.max(0, (player.health / player.maxHealth) * 100)}%`;
   healthText.textContent = `${Math.max(0, Math.ceil(player.health))} / ${Math.ceil(player.maxHealth)}`;
   specialBar.style.width = `${Math.max(0, (player.specialCharge / specialMax) * 100)}%`;
   specialButton.classList.toggle("is-ready", player.specialCharge >= specialMax);
   specialButton.disabled = player.specialCharge < specialMax || gameState !== "playing";
-  specialButton.title = player.specialCharge >= specialMax ? `${currentUnit().specialName} ready` : `${currentUnit().specialName} charging`;
+  specialButton.title = player.specialCharge >= specialMax ? `${currentUnit().specialName} 준비 완료` : `${currentUnit().specialName} 충전 중`;
   specialButton.setAttribute("aria-label", specialButton.title);
 }
 
 function updateUnitPreview() {
   const unit = units[unitSelect.value] || units.tank;
   unitName.textContent = unit.label;
-  unitRole.textContent = `${unit.role} / Energy ${maxHealthForTier(unit, 1)}`;
+  unitRole.textContent = `${unit.role} / 에너지 ${maxHealthForTier(unit, 1)}`;
   specialName.textContent = unit.specialName;
   specialDescription.textContent = unit.specialDescription;
-  specialButton.title = `${unit.specialName} charging`;
+  specialButton.title = `${unit.specialName} 충전 중`;
   specialButton.setAttribute("aria-label", specialButton.title);
   statRows.innerHTML = "";
 
@@ -505,11 +505,11 @@ function missileKindForTier(tier) {
 }
 
 function missileLabel(kind) {
-  if (kind === "laser") return "Laser";
-  if (kind === "boomerang") return "Boomerang";
-  if (kind === "homing") return "Homing";
-  if (kind === "gas") return "Gas";
-  return "Rocket";
+  if (kind === "laser") return "레이저";
+  if (kind === "boomerang") return "부메랑";
+  if (kind === "homing") return "유도";
+  if (kind === "gas") return "가스";
+  return "로켓";
 }
 
 function createMissile(angle, tier, bonusDamage = 0, radiusBonus = 0) {
@@ -679,6 +679,10 @@ function currentObstacles() {
 
 function playerTier() {
   return clamp(1 + Math.floor(score / 250), 1, 7);
+}
+
+function stageDifficulty() {
+  return currentMapIndex + 1;
 }
 
 function rebuildDynamicTerrain() {
@@ -913,21 +917,21 @@ function renderRecords() {
 
   shownRecords.slice(0, 8).forEach((record) => {
     const item = document.createElement("li");
-    item.textContent = `${record.name} ${record.score} ${record.unit}`;
+    item.textContent = `${record.name} ${record.score}점 ${record.unit}`;
     if (record.pending) item.className = "pending-record";
     scoreList.appendChild(item);
   });
 
   if (shownRecords.length === 0) {
     const item = document.createElement("li");
-    item.textContent = "No records";
+    item.textContent = "기록 없음";
     scoreList.appendChild(item);
   }
 }
 
 function playerName() {
   const name = playerNameInput.value.trim();
-  return name || "Player";
+  return name || "플레이어";
 }
 
 function saveScoreRecord() {
@@ -946,7 +950,7 @@ function saveScoreRecord() {
   saveRecords();
   renderRecords();
   saveScoreButton.disabled = true;
-  saveScoreButton.textContent = "Saved";
+  saveScoreButton.textContent = "저장 완료";
   playSaveSound();
 }
 
@@ -1014,23 +1018,29 @@ function spawnEnemy() {
     x,
     y,
     radius: spec.radius,
-    health: spec.health + levelBonus,
-    maxHealth: spec.health + levelBonus,
-    speed: spec.speed + wave * 4,
+    health: spec.health + levelBonus + currentMapIndex * 2,
+    maxHealth: spec.health + levelBonus + currentMapIndex * 2,
+    speed: spec.speed + wave * 4 + currentMapIndex * 10,
     color: spec.color,
     stopDistance: spec.stop,
-    scoreValue: spec.score,
-    shootCooldown: 0.9 + Math.random() * 0.8,
+    scoreValue: spec.score + currentMapIndex * 4,
+    contactDamage: 10 + currentMapIndex * 3 + Math.floor(wave / 5),
+    bulletDamage: 9 + currentMapIndex * 2 + Math.floor(wave / 6),
+    bulletSpeed: 330 + currentMapIndex * 24,
+    shootCooldown: Math.max(0.45, 0.9 - currentMapIndex * 0.05) + Math.random() * 0.8,
     orbitDir: Math.random() < 0.5 ? -1 : 1
   });
 }
 
 function chooseEnemyType() {
+  const stage = stageDifficulty();
   const options = ["chaser"];
-  if (wave >= 2) options.push("sprinter");
-  if (wave >= 3) options.push("brute");
-  if (wave >= 4) options.push("shooter");
-  if (wave >= 5) options.push("orbit");
+  if (wave >= 2 || stage >= 2) options.push("sprinter");
+  if (wave >= 3 || stage >= 3) options.push("brute");
+  if (wave >= 4 || stage >= 4) options.push("shooter");
+  if (wave >= 5 || stage >= 5) options.push("orbit");
+  if (stage >= 4) options.push("shooter", "brute");
+  if (stage >= 5) options.push("orbit", "sprinter");
   return options[Math.floor(Math.random() * options.length)];
 }
 
@@ -1086,8 +1096,8 @@ function updateEnemy(enemy, dt) {
         }
         enemy.shootCooldown = Math.max(0.44, 1.05 - level * 0.08);
       } else {
-        shootEnemyBullet(enemy, angle, 330, 8, 9);
-        enemy.shootCooldown = 1.2 + Math.random() * 0.7;
+        shootEnemyBullet(enemy, angle, enemy.bulletSpeed || 330, 8, enemy.bulletDamage || 9);
+        enemy.shootCooldown = Math.max(0.55, 1.2 - currentMapIndex * 0.08) + Math.random() * 0.7;
       }
       playTone(enemy.boss ? 180 : 240, 0.06, "square", 0.035);
     }
@@ -1344,7 +1354,7 @@ function update(dt) {
   spawnTimer -= dt;
   if (spawnTimer <= 0) {
     spawnEnemy();
-    spawnTimer = Math.max(0.28, 1.25 - wave * 0.06);
+    spawnTimer = Math.max(0.22, 1.25 - wave * 0.055 - currentMapIndex * 0.08);
   }
 
   itemTimer -= dt;
@@ -1456,7 +1466,7 @@ function update(dt) {
         addParticles(enemy.x, enemy.y, "#93c5fd", 12);
         playTone(520, 0.08, "sine", 0.05);
       } else {
-        takeDamage(enemy.boss ? enemy.contactDamage || 22 : 10);
+        takeDamage(enemy.boss ? enemy.contactDamage || 22 : enemy.contactDamage || 10);
         playTone(140, 0.13, "sawtooth", 0.08);
       }
       player.invulnerable = 0.55;
@@ -1524,9 +1534,9 @@ function update(dt) {
 function endGame() {
   gameOver = true;
   gameState = "ended";
-  finalScore.textContent = `Score ${score}`;
+  finalScore.textContent = `점수 ${score}`;
   saveScoreButton.disabled = false;
-  saveScoreButton.textContent = "Save Score";
+  saveScoreButton.textContent = "점수 저장";
   startPanel.hidden = true;
   gameOverPanel.hidden = false;
   rewardPanel.hidden = true;
@@ -1682,7 +1692,7 @@ function drawDynamicTerrain() {
       ctx.font = "900 24px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("JUMP", object.x + object.w / 2, object.y + object.h * 0.58);
+      ctx.fillText("점프", object.x + object.w / 2, object.y + object.h * 0.58);
       ctx.restore();
     } else if (object.type === "portal") {
       ctx.save();
@@ -1715,14 +1725,14 @@ function drawDynamicTerrain() {
 function drawBackgroundPattern(map) {
   ctx.save();
   ctx.globalAlpha = 0.22;
-  if (map.name === "Desert") {
+  if (map.name === "사막") {
     ctx.fillStyle = "#fbbf24";
     for (let i = 0; i < 18; i += 1) {
       ctx.beginPath();
       ctx.arc((i * 131) % world.width, 120 + ((i * 211) % 1250), 18 + (i % 4) * 8, 0, Math.PI * 2);
       ctx.fill();
     }
-  } else if (map.name === "Ice") {
+  } else if (map.name === "빙하") {
     ctx.strokeStyle = "#e0f2fe";
     ctx.lineWidth = 5;
     for (let i = 0; i < 10; i += 1) {
@@ -1735,12 +1745,12 @@ function drawBackgroundPattern(map) {
       ctx.lineTo(x, y + 32);
       ctx.stroke();
     }
-  } else if (map.name === "Space") {
+  } else if (map.name === "우주") {
     ctx.fillStyle = "#f8fafc";
     for (let i = 0; i < 64; i += 1) {
       ctx.fillRect((i * 67) % world.width, (i * 149) % world.height, 3, 3);
     }
-  } else if (map.name === "Nebula") {
+  } else if (map.name === "성운") {
     ctx.strokeStyle = "#f5d0fe";
     ctx.lineWidth = 4;
     for (let i = 0; i < 14; i += 1) {
@@ -1750,7 +1760,7 @@ function drawBackgroundPattern(map) {
       ctx.arc(x, y, 28 + (i % 3) * 12, 0.2, Math.PI * 1.7);
       ctx.stroke();
     }
-  } else if (map.name === "Core") {
+  } else if (map.name === "코어") {
     ctx.fillStyle = "#fb7185";
     for (let i = 0; i < 18; i += 1) {
       const x = (i * 151) % world.width;
@@ -2291,7 +2301,7 @@ function drawItem(item) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.font = "900 22px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
-  ctx.fillText(item.type === "missile" ? "M" : item.type === "shield" ? "S" : "E", item.x, item.y + 1);
+  ctx.fillText(item.type === "missile" ? "미" : item.type === "shield" ? "보" : "에", item.x, item.y + 1);
 }
 
 function drawParticle(particle) {
@@ -2309,9 +2319,9 @@ function drawGameOver() {
   ctx.fillStyle = "#f8fafc";
   ctx.textAlign = "center";
   ctx.font = "900 76px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
-  ctx.fillText("Game Over", world.width / 2, world.height / 2 - 40);
+  ctx.fillText("게임 종료", world.width / 2, world.height / 2 - 40);
   ctx.font = "700 34px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
-  ctx.fillText(`Score ${score}`, world.width / 2, world.height / 2 + 20);
+  ctx.fillText(`점수 ${score}`, world.width / 2, world.height / 2 + 20);
   ctx.font = "700 26px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
   ctx.fillText(`${playerName()} / ${units[selectedUnit].label} / ${currentMap().name}`, world.width / 2, world.height / 2 + 62);
 }

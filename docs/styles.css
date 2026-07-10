@@ -360,7 +360,7 @@ select {
   color: #ffffff;
   background: radial-gradient(circle at 35% 30%, #f97316, #dc2626 70%);
   box-shadow: 0 14px 34px rgba(220, 38, 38, 0.45);
-  font-size: 38px;
+  font-size: 28px;
   font-weight: 900;
   -webkit-user-select: none !important;
   user-select: none !important;

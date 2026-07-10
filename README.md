@@ -1,38 +1,27 @@
-# Jeongwoo Battle
+# 정우 배틀
 
-Mobile web arena shooter test game.
+모바일 웹 아레나 슈팅 테스트 게임입니다.
 
-## Play
+## 실행
 
 `https://kjuws10-rgb.github.io/JeongwooBattle/`
 
-On iPhone Safari, use Share -> Add to Home Screen to run it like an app.
+아이폰 Safari에서 공유 버튼을 누른 뒤 홈 화면에 추가하면 앱처럼 실행할 수 있습니다.
 
-## Features
+## 기능
 
-- Choose a unit before the game starts: Tank, Jet, Rover, Ship, Mech, Drone, Speeder, Walker, Phantom, Titan, Medic, Artillery, Blade, or Nova
-- The unit selection screen shows strength, speed, defense, durability, power, and special skill details
-- Each unit has distinct combat tuning for attack, movement, defense, health, and starting power
-- Units visually upgrade as score tiers increase
-- Unit health pools start at 2x base energy, and power cubes can raise each unit's max health further
-- Every visual upgrade tier also increases max energy, attack scaling, defense efficiency, movement speed, power, and special charge
-- Basic shots and missile visuals upgrade by score tier with stronger color, size, speed, and damage
-- Missile upgrades add weapon variants such as laser shots, boomerang missiles, homing missiles, and gas rounds
-- Left joystick moves, right button shoots, and the yellow SP button uses a charged special skill
-- A yellow special gauge sits under the health bar and fills from kills and pickups
-- The top HUD area is blocked off inside the arena
-- Collect blue cubes for stronger shots
-- Collect orange missile items for burst shots and blue shield items for temporary protection
-- Item field spawns and enemy drops use lower probability tuning so rewards are less crowded
-- The map changes at higher scores: Grass, Desert, Ice, Space, Nebula, and Core
-- Stage score thresholds are longer so each zone lasts longer before the boss gate
-- A boss appears before each new map and must be cleared to unlock the next stage
-- Boss clears open a three-choice random reward event
-- Boss fights clear regular enemies, then scale boss health, contact damage, projectile damage, and bullet patterns by stage while keeping the first boss easier to learn
-- Enemies include chasers, sprinters, brutes, shooters, orbiters, and bosses
-- Enemies keep distance from the player instead of stacking on top of the unit
-- Higher levels add varied obstacle shapes, jump pads, teleport portals, and moving obstacles
-- Energy items and cubes restore more health than before
-- Game over screen lets the player enter a name and save the score
-- Local ranking records name, score, unit, and final zone
-- Includes synthesized sound effects and background music
+- 게임 시작 전에 14종 캐릭터를 선택할 수 있습니다.
+- 캐릭터 선택 화면에서 힘, 속도, 방어, 맷집, 파워, 스페셜 정보를 확인할 수 있습니다.
+- 모든 캐릭터는 공격, 이동, 방어, 에너지, 시작 파워가 다르게 설정되어 있습니다.
+- 기본 에너지는 2배 기준으로 시작하며, 큐브와 보상으로 최대 에너지를 더 올릴 수 있습니다.
+- 외형 업그레이드 단계가 오를 때마다 최대 에너지, 공격, 방어, 이동 속도, 파워, 스페셜 게이지가 함께 강화됩니다.
+- 기본탄과 미사일은 단계에 따라 색상, 크기, 속도, 피해량, 외형이 강화됩니다.
+- 미사일은 레이저, 부메랑, 유도 미사일, 가스탄 등으로 변화합니다.
+- 왼쪽 조이스틱으로 이동하고, 오른쪽 버튼으로 발사하며, 노란 SP 버튼으로 스페셜을 사용합니다.
+- 체력바에는 현재 에너지와 최대 에너지가 숫자로 표시됩니다.
+- 지역은 초원, 사막, 빙하, 우주, 성운, 코어 순서로 진행됩니다.
+- 지역별 점수 구간이 길게 설정되어 각 지역을 충분히 플레이한 뒤 보스가 등장합니다.
+- 보스를 처치하면 3개 랜덤 보상 중 하나를 선택할 수 있습니다.
+- 보스전은 일반 적이 사라지고 보스만 남으며, 단계가 높아질수록 보스와 일반 적 난이도가 함께 올라갑니다.
+- 에너지 아이템과 큐브는 이전보다 더 많은 에너지를 회복합니다.
+- 게임 종료 화면에서 기록자 이름을 입력하고 점수를 저장할 수 있습니다.

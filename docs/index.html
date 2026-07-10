@@ -6,67 +6,67 @@
   <meta name="theme-color" content="#111827">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Jeongwoo Battle">
-  <title>Jeongwoo Battle</title>
-  <link rel="manifest" href="./manifest.webmanifest?v=17">
+  <meta name="apple-mobile-web-app-title" content="정우 배틀">
+  <title>정우 배틀</title>
+  <link rel="manifest" href="./manifest.webmanifest?v=18">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=17">
+  <link rel="stylesheet" href="./styles.css?v=18">
 </head>
 <body>
   <main class="game-shell">
-    <canvas id="gameCanvas" width="900" height="1500" aria-label="Jeongwoo Battle game screen"></canvas>
+    <canvas id="gameCanvas" width="900" height="1500" aria-label="정우 배틀 게임 화면"></canvas>
 
     <section id="startPanel" class="start-panel">
-      <h1>Jeongwoo Battle</h1>
-      <p>Choose your unit</p>
+      <h1>정우 배틀</h1>
+      <p>캐릭터 선택</p>
       <label>
-        <span class="label">Unit</span>
+        <span class="label">캐릭터</span>
         <select id="unitSelect">
-          <option value="tank">Tank</option>
-          <option value="jet">Jet</option>
-          <option value="rover">Rover</option>
-          <option value="ship">Ship</option>
-          <option value="mech">Mech</option>
-          <option value="drone">Drone</option>
-          <option value="speeder">Speeder</option>
-          <option value="walker">Walker</option>
-          <option value="phantom">Phantom</option>
-          <option value="titan">Titan</option>
-          <option value="medic">Medic</option>
-          <option value="artillery">Artillery</option>
-          <option value="blade">Blade</option>
-          <option value="nova">Nova</option>
+          <option value="tank">탱크</option>
+          <option value="jet">전투기</option>
+          <option value="rover">로버</option>
+          <option value="ship">전함</option>
+          <option value="mech">메카</option>
+          <option value="drone">드론</option>
+          <option value="speeder">스피더</option>
+          <option value="walker">워커</option>
+          <option value="phantom">팬텀</option>
+          <option value="titan">타이탄</option>
+          <option value="medic">메딕</option>
+          <option value="artillery">포병</option>
+          <option value="blade">블레이드</option>
+          <option value="nova">노바</option>
         </select>
       </label>
       <section class="unit-card" aria-live="polite">
         <div>
-          <span class="label">Selected Unit</span>
-          <strong id="unitName">Tank</strong>
-          <p id="unitRole">Balanced front-line unit</p>
+          <span class="label">선택 캐릭터</span>
+          <strong id="unitName">탱크</strong>
+          <p id="unitRole">균형형 전방 유닛</p>
         </div>
         <div id="statRows" class="stat-rows"></div>
         <div class="special-preview">
-          <span class="label">Special</span>
-          <strong id="specialName">Iron Barrage</strong>
-          <p id="specialDescription">Launches a defensive missile burst.</p>
+          <span class="label">스페셜</span>
+          <strong id="specialName">강철 포격</strong>
+          <p id="specialDescription">방어막과 미사일 폭격을 사용합니다.</p>
         </div>
       </section>
-      <button id="startButton" class="primary-action" type="button">Start Game</button>
+      <button id="startButton" class="primary-action" type="button">게임 시작</button>
     </section>
 
     <section class="hud" aria-live="polite">
       <div>
-        <span class="label">Score</span>
+        <span class="label">점수</span>
         <strong id="score">0</strong>
       </div>
       <div>
-        <span class="label">Zone</span>
-        <strong id="wave">Grass</strong>
+        <span class="label">지역</span>
+        <strong id="wave">초원</strong>
       </div>
       <div>
-        <span class="label">Power</span>
-        <strong id="power">P1 M0 S0</strong>
+        <span class="label">능력</span>
+        <strong id="power">파워1 미사일0 보호0</strong>
       </div>
     </section>
 
@@ -74,36 +74,36 @@
       <div id="healthBar"></div>
       <span id="healthText">0 / 0</span>
     </section>
-    <section class="special-meter" aria-label="Special skill energy">
+    <section class="special-meter" aria-label="스페셜 게이지">
       <div id="specialBar"></div>
     </section>
 
     <section id="gameOverPanel" class="end-panel" hidden>
-      <h2>Game Over</h2>
-      <strong id="finalScore">Score 0</strong>
+      <h2>게임 종료</h2>
+      <strong id="finalScore">점수 0</strong>
       <label>
-        <span class="label">Player Name</span>
-        <input id="playerName" type="text" maxlength="14" value="Jeongwoo" autocomplete="off">
+        <span class="label">기록자 이름</span>
+        <input id="playerName" type="text" maxlength="14" value="정우" autocomplete="off">
       </label>
-      <button id="saveScoreButton" class="primary-action" type="button">Save Score</button>
-      <span class="label">Score Ranking</span>
+      <button id="saveScoreButton" class="primary-action" type="button">점수 저장</button>
+      <span class="label">점수 순위</span>
       <ol id="scoreList"></ol>
-      <button id="restartButton" class="secondary-action" type="button">Play Again</button>
+      <button id="restartButton" class="secondary-action" type="button">다시 하기</button>
     </section>
 
     <section id="rewardPanel" class="reward-panel" hidden>
-      <h2>Boss Clear</h2>
-      <p>Choose one reward</p>
+      <h2>보스 클리어</h2>
+      <p>보상 하나를 선택하세요</p>
       <div id="rewardOptions" class="reward-options"></div>
     </section>
 
-    <div id="moveStick" class="stick" aria-label="Move joystick">
+    <div id="moveStick" class="stick" aria-label="이동 조이스틱">
       <div id="moveKnob"></div>
     </div>
-    <button id="shootButton" class="shoot" type="button" aria-label="Shoot">FIRE</button>
-    <button id="specialButton" class="special" type="button" aria-label="Use special skill">SP</button>
+    <button id="shootButton" class="shoot" type="button" aria-label="발사">발사</button>
+    <button id="specialButton" class="special" type="button" aria-label="스페셜 사용">SP</button>
   </main>
 
-  <script src="./app.js?v=17" defer></script>
+  <script src="./app.js?v=18" defer></script>
 </body>
 </html>
