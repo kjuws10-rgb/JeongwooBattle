@@ -72,7 +72,8 @@ select {
 }
 
 .start-panel,
-.end-panel {
+.end-panel,
+.reward-panel {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -163,6 +164,11 @@ select {
   overflow: auto;
 }
 
+.reward-panel {
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+}
+
 .end-panel strong {
   font-size: 24px;
   line-height: 1;
@@ -222,6 +228,18 @@ select {
   background: rgba(15, 23, 42, 0.78);
 }
 
+#healthText {
+  position: absolute;
+  inset: -1px 0 0;
+  display: grid;
+  place-items: center;
+  color: #f8fafc;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+}
+
 .special-meter {
   position: absolute;
   top: calc(env(safe-area-inset-top) + 81px);
@@ -263,6 +281,47 @@ select {
   width: 0%;
   height: 100%;
   background: linear-gradient(90deg, #facc15, #fde047);
+}
+
+.reward-panel h2 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.reward-panel p {
+  margin: -4px 0 2px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.reward-options {
+  display: grid;
+  gap: 10px;
+}
+
+.reward-option {
+  display: grid;
+  gap: 4px;
+  min-height: 72px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: left;
+  color: #f8fafc;
+  background: rgba(2, 6, 23, 0.48);
+}
+
+.reward-option strong {
+  font-size: 17px;
+  line-height: 1.1;
+}
+
+.reward-option span {
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.25;
 }
 
 .stick {
@@ -332,6 +391,7 @@ select {
 .game-shell.is-menu .hud,
 .game-shell.is-menu .health,
 .game-shell.is-menu .special-meter,
+.game-shell.is-menu .reward-panel,
 .game-shell.is-menu .stick,
 .game-shell.is-menu .shoot,
 .game-shell.is-menu .special {
@@ -342,8 +402,15 @@ select {
 .game-shell.is-ended .hud,
 .game-shell.is-ended .health,
 .game-shell.is-ended .special-meter,
+.game-shell.is-ended .reward-panel,
 .game-shell.is-ended .shoot,
 .game-shell.is-ended .special {
+  display: none;
+}
+
+.game-shell.is-reward .stick,
+.game-shell.is-reward .shoot,
+.game-shell.is-reward .special {
   display: none;
 }
 

@@ -10,7 +10,7 @@ On iPhone Safari, use Share -> Add to Home Screen to run it like an app.
 
 ## Features
 
-- Choose a unit before the game starts: Tank, Jet, Rover, Ship, Mech, Drone, Speeder, or Walker
+- Choose a unit before the game starts: Tank, Jet, Rover, Ship, Mech, Drone, Speeder, Walker, Phantom, Titan, Medic, Artillery, Blade, or Nova
 - The unit selection screen shows strength, speed, defense, durability, power, and special skill details
 - Each unit has distinct combat tuning for attack, movement, defense, health, and starting power
 - Units visually upgrade as score tiers increase
@@ -25,11 +25,14 @@ On iPhone Safari, use Share -> Add to Home Screen to run it like an app.
 - Collect orange missile items for burst shots and blue shield items for temporary protection
 - Item field spawns and enemy drops use lower probability tuning so rewards are less crowded
 - The map changes at higher scores: Grass, Desert, Ice, Space, Nebula, and Core
+- Stage score thresholds are longer so each zone lasts longer before the boss gate
 - A boss appears before each new map and must be cleared to unlock the next stage
+- Boss clears open a three-choice random reward event
 - Boss fights clear regular enemies, then scale boss health, contact damage, projectile damage, and bullet patterns by stage while keeping the first boss easier to learn
 - Enemies include chasers, sprinters, brutes, shooters, orbiters, and bosses
 - Enemies keep distance from the player instead of stacking on top of the unit
 - Higher levels add varied obstacle shapes, jump pads, teleport portals, and moving obstacles
+- Energy items and cubes restore more health than before
 - Game over screen lets the player enter a name and save the score
 - Local ranking records name, score, unit, and final zone
 - Includes synthesized sound effects and background music

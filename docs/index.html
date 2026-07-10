@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Jeongwoo Battle">
   <title>Jeongwoo Battle</title>
-  <link rel="manifest" href="./manifest.webmanifest?v=16">
+  <link rel="manifest" href="./manifest.webmanifest?v=17">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=16">
+  <link rel="stylesheet" href="./styles.css?v=17">
 </head>
 <body>
   <main class="game-shell">
@@ -31,6 +31,12 @@
           <option value="drone">Drone</option>
           <option value="speeder">Speeder</option>
           <option value="walker">Walker</option>
+          <option value="phantom">Phantom</option>
+          <option value="titan">Titan</option>
+          <option value="medic">Medic</option>
+          <option value="artillery">Artillery</option>
+          <option value="blade">Blade</option>
+          <option value="nova">Nova</option>
         </select>
       </label>
       <section class="unit-card" aria-live="polite">
@@ -66,6 +72,7 @@
 
     <section class="health">
       <div id="healthBar"></div>
+      <span id="healthText">0 / 0</span>
     </section>
     <section class="special-meter" aria-label="Special skill energy">
       <div id="specialBar"></div>
@@ -84,6 +91,12 @@
       <button id="restartButton" class="secondary-action" type="button">Play Again</button>
     </section>
 
+    <section id="rewardPanel" class="reward-panel" hidden>
+      <h2>Boss Clear</h2>
+      <p>Choose one reward</p>
+      <div id="rewardOptions" class="reward-options"></div>
+    </section>
+
     <div id="moveStick" class="stick" aria-label="Move joystick">
       <div id="moveKnob"></div>
     </div>
@@ -91,6 +104,6 @@
     <button id="specialButton" class="special" type="button" aria-label="Use special skill">SP</button>
   </main>
 
-  <script src="./app.js?v=16" defer></script>
+  <script src="./app.js?v=17" defer></script>
 </body>
 </html>

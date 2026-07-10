@@ -5,10 +5,13 @@ const scoreEl = document.querySelector("#score");
 const waveEl = document.querySelector("#wave");
 const powerEl = document.querySelector("#power");
 const healthBar = document.querySelector("#healthBar");
+const healthText = document.querySelector("#healthText");
 const specialBar = document.querySelector("#specialBar");
 const startPanel = document.querySelector("#startPanel");
 const startButton = document.querySelector("#startButton");
 const gameOverPanel = document.querySelector("#gameOverPanel");
+const rewardPanel = document.querySelector("#rewardPanel");
+const rewardOptions = document.querySelector("#rewardOptions");
 const finalScore = document.querySelector("#finalScore");
 const saveScoreButton = document.querySelector("#saveScoreButton");
 const restartButton = document.querySelector("#restartButton");
@@ -70,6 +73,36 @@ const units = {
     label: "Walker", role: "Defensive walker with strong close-range control", radius: 33, speed: 310, maxHealth: 185, fireDelay: 0.29, color: "#64748b", shot: "#cbd5e1",
     attack: 1.04, defense: 0.8, startPower: 1, stats: { strength: 6, speed: 4, defense: 9, durability: 9, power: 5 },
     specialName: "Guard Stomp", specialDescription: "Creates a shockwave, shields the unit, and heals slightly.", special: "stomp"
+  },
+  phantom: {
+    label: "Phantom", role: "Stealth striker with sharp burst damage", radius: 24, speed: 445, maxHealth: 115, fireDelay: 0.21, color: "#8b5cf6", shot: "#ddd6fe",
+    attack: 1.18, defense: 1.08, startPower: 1, stats: { strength: 8, speed: 9, defense: 4, durability: 4, power: 8 },
+    specialName: "Phase Cut", specialDescription: "Clears bullets, dashes safely, and fires piercing shots.", special: "dash"
+  },
+  titan: {
+    label: "Titan", role: "Massive siege unit with extreme energy", radius: 38, speed: 255, maxHealth: 260, fireDelay: 0.39, color: "#b91c1c", shot: "#fecaca",
+    attack: 1.32, defense: 0.72, startPower: 1, stats: { strength: 10, speed: 2, defense: 10, durability: 10, power: 7 },
+    specialName: "Titan Salvo", specialDescription: "Launches heavy missiles and gains extra protection.", special: "salvo"
+  },
+  medic: {
+    label: "Medic", role: "Recovery unit that keeps energy high", radius: 27, speed: 350, maxHealth: 150, fireDelay: 0.25, color: "#10b981", shot: "#a7f3d0",
+    attack: 0.9, defense: 0.92, startPower: 2, stats: { strength: 4, speed: 6, defense: 7, durability: 8, power: 6 },
+    specialName: "Full Restore", specialDescription: "Restores energy and adds shield time.", special: "repair", specialGain: 1.12
+  },
+  artillery: {
+    label: "Artillery", role: "Long range unit with powerful missiles", radius: 31, speed: 285, maxHealth: 155, fireDelay: 0.33, color: "#f59e0b", shot: "#fde68a",
+    attack: 1.28, defense: 0.9, startPower: 1, stats: { strength: 9, speed: 3, defense: 6, durability: 7, power: 9 },
+    specialName: "Bombardment", specialDescription: "Fires a wide upgraded missile barrage.", special: "barrage"
+  },
+  blade: {
+    label: "Blade", role: "Close range speed unit with high control", radius: 25, speed: 485, maxHealth: 120, fireDelay: 0.2, color: "#06b6d4", shot: "#cffafe",
+    attack: 1.08, defense: 1.04, startPower: 1, stats: { strength: 7, speed: 10, defense: 4, durability: 4, power: 7 },
+    specialName: "Blade Dash", specialDescription: "Dashes through danger and sends blades outward.", special: "dash"
+  },
+  nova: {
+    label: "Nova", role: "Energy core unit with strong special control", radius: 29, speed: 365, maxHealth: 145, fireDelay: 0.24, color: "#ec4899", shot: "#fbcfe8",
+    attack: 1.05, defense: 0.98, startPower: 2, stats: { strength: 6, speed: 7, defense: 5, durability: 6, power: 10 },
+    specialName: "Nova Pulse", specialDescription: "Releases a gravity pulse and fills special quickly.", special: "gravity", specialGain: 1.22
   }
 };
 const statLabels = {
@@ -86,10 +119,76 @@ const itemSettings = {
   fieldSpawnBase: 13,
   fieldSpawnVariance: 8,
   fieldMissileChance: 0.38,
+  fieldEnergyChance: 0.28,
   dropCubeChance: 0.28,
   dropMissileChance: 0.08,
-  dropShieldChance: 0.06
+  dropShieldChance: 0.06,
+  dropEnergyChance: 0.09
 };
+const rewardCatalog = [
+  {
+    title: "Energy +50%",
+    description: "Restore 50% of max energy.",
+    apply: () => {
+      player.health = Math.min(player.maxHealth, player.health + Math.ceil(player.maxHealth * 0.5));
+    }
+  },
+  {
+    title: "Full Energy",
+    description: "Restore energy to 100%.",
+    apply: () => {
+      player.health = player.maxHealth;
+    }
+  },
+  {
+    title: "Special Full",
+    description: "Fill the SP gauge completely.",
+    apply: () => {
+      player.specialCharge = specialMax;
+    }
+  },
+  {
+    title: "Missile Upgrade",
+    description: "Gain missiles and increase power.",
+    apply: () => {
+      player.missiles += 6;
+      player.power += 2;
+    }
+  },
+  {
+    title: "Max Energy Core",
+    description: "Increase max energy and heal by the same amount.",
+    apply: () => {
+      const gain = Math.ceil(player.maxHealth * 0.14);
+      player.maxHealth += gain;
+      player.health = Math.min(player.maxHealth, player.health + gain);
+    }
+  },
+  {
+    title: "Shield Battery",
+    description: "Gain long shield time and some energy.",
+    apply: () => {
+      player.shieldTime = Math.max(player.shieldTime, 14);
+      player.health = Math.min(player.maxHealth, player.health + Math.ceil(player.maxHealth * 0.25));
+    }
+  },
+  {
+    title: "Power Surge",
+    description: "Increase power and charge SP.",
+    apply: () => {
+      player.power += 3;
+      gainSpecial(35);
+    }
+  },
+  {
+    title: "Overdrive",
+    description: "Temporary speed boost plus missiles.",
+    apply: () => {
+      player.boostTime = Math.max(player.boostTime, 10);
+      player.missiles += 4;
+    }
+  }
+];
 const maps = [
   {
     name: "Grass",
@@ -109,7 +208,7 @@ const maps = [
   },
   {
     name: "Desert",
-    minScore: 250,
+    minScore: 650,
     bg: "#92400e",
     grid: "rgba(254,243,199,0.12)",
     block: "#451a03",
@@ -125,7 +224,7 @@ const maps = [
   },
   {
     name: "Ice",
-    minScore: 600,
+    minScore: 1450,
     bg: "#0e7490",
     grid: "rgba(224,242,254,0.16)",
     block: "#164e63",
@@ -141,7 +240,7 @@ const maps = [
   },
   {
     name: "Space",
-    minScore: 1000,
+    minScore: 2500,
     bg: "#1e1b4b",
     grid: "rgba(221,214,254,0.16)",
     block: "#312e81",
@@ -157,7 +256,7 @@ const maps = [
   },
   {
     name: "Nebula",
-    minScore: 1500,
+    minScore: 3900,
     bg: "#581c87",
     grid: "rgba(245,208,254,0.16)",
     block: "#701a75",
@@ -173,7 +272,7 @@ const maps = [
   },
   {
     name: "Core",
-    minScore: 2200,
+    minScore: 5600,
     bg: "#7f1d1d",
     grid: "rgba(254,202,202,0.15)",
     block: "#450a0a",
@@ -214,6 +313,7 @@ let dynamicObjects = [];
 let unlockedMapIndex = 0;
 let bossTargetMapIndex = null;
 let bossActive = false;
+let rewardPending = false;
 
 const player = {
   x: world.width / 2,
@@ -282,6 +382,7 @@ function resetRoundState() {
   unlockedMapIndex = 0;
   bossTargetMapIndex = null;
   bossActive = false;
+  rewardPending = false;
   scoreSaved = false;
   visualTier = 1;
   gameOver = false;
@@ -296,8 +397,9 @@ function showStartScreen() {
   gameState = "menu";
   startPanel.hidden = false;
   gameOverPanel.hidden = true;
+  rewardPanel.hidden = true;
   gameShell.classList.add("is-menu");
-  gameShell.classList.remove("is-ended");
+  gameShell.classList.remove("is-ended", "is-reward");
 }
 
 function startGame() {
@@ -306,7 +408,8 @@ function startGame() {
   gameState = "playing";
   startPanel.hidden = true;
   gameOverPanel.hidden = true;
-  gameShell.classList.remove("is-menu", "is-ended");
+  rewardPanel.hidden = true;
+  gameShell.classList.remove("is-menu", "is-ended", "is-reward");
   playStartSound();
 }
 
@@ -316,6 +419,7 @@ function updateHud() {
   const missileType = player.missiles > 0 ? ` ${missileLabel(missileKindForTier(playerTier())).slice(0, 3).toUpperCase()}` : "";
   powerEl.textContent = `P${player.power} M${player.missiles}${missileType} S${Math.ceil(player.shieldTime)}`;
   healthBar.style.width = `${Math.max(0, (player.health / player.maxHealth) * 100)}%`;
+  healthText.textContent = `${Math.max(0, Math.ceil(player.health))} / ${Math.ceil(player.maxHealth)}`;
   specialBar.style.width = `${Math.max(0, (player.specialCharge / specialMax) * 100)}%`;
   specialButton.classList.toggle("is-ready", player.specialCharge >= specialMax);
   specialButton.disabled = player.specialCharge < specialMax || gameState !== "playing";
@@ -672,7 +776,7 @@ function updateMapByScore() {
   }
 
   const nextMapIndex = unlockedMapIndex + 1;
-  if (!bossActive && nextMapIndex < maps.length && score >= maps[nextMapIndex].minScore) {
+  if (!rewardPending && !bossActive && nextMapIndex < maps.length && score >= maps[nextMapIndex].minScore) {
     spawnBoss(nextMapIndex);
   }
 }
@@ -730,12 +834,54 @@ function clearBoss(enemy) {
   currentMapIndex = unlockedMapIndex;
   bossTargetMapIndex = null;
   bossActive = false;
+  rewardPending = true;
   enemyBullets = [];
   rebuildDynamicTerrain();
   addParticles(player.x, player.y, currentMap().edge, 76);
   playTone(392, 0.14, "triangle", 0.085);
   window.setTimeout(() => playTone(523.25, 0.16, "triangle", 0.085), 130);
-  window.setTimeout(() => updateMapByScore(), 220);
+  window.setTimeout(() => showRewardChoices(), 220);
+}
+
+function randomRewards() {
+  return [...rewardCatalog]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 3);
+}
+
+function showRewardChoices() {
+  if (gameOver) return;
+
+  gameState = "reward";
+  input.shooting = false;
+  rewardOptions.innerHTML = "";
+  randomRewards().forEach((reward) => {
+    const button = document.createElement("button");
+    button.className = "reward-option";
+    button.type = "button";
+    const title = document.createElement("strong");
+    title.textContent = reward.title;
+    const description = document.createElement("span");
+    description.textContent = reward.description;
+    button.append(title, description);
+    button.addEventListener("click", () => chooseReward(reward), { once: true });
+    rewardOptions.appendChild(button);
+  });
+  rewardPanel.hidden = false;
+  gameShell.classList.add("is-reward");
+  updateHud();
+}
+
+function chooseReward(reward) {
+  reward.apply();
+  rewardPending = false;
+  rewardPanel.hidden = true;
+  gameShell.classList.remove("is-reward");
+  gameState = "playing";
+  addParticles(player.x, player.y, currentMap().edge, 40);
+  playTone(880, 0.14, "triangle", 0.07);
+  updateHud();
+  updateMapByScore();
 }
 
 function loadRecords() {
@@ -1104,7 +1250,8 @@ function addParticles(x, y, color, count) {
 }
 
 function spawnFieldItem() {
-  const type = Math.random() < itemSettings.fieldMissileChance ? "missile" : "shield";
+  const roll = Math.random();
+  const type = roll < itemSettings.fieldMissileChance ? "missile" : roll < itemSettings.fieldMissileChance + itemSettings.fieldEnergyChance ? "energy" : "shield";
   let item = null;
 
   for (let attempt = 0; attempt < 40; attempt += 1) {
@@ -1284,12 +1431,15 @@ function update(dt) {
     const roll = Math.random();
     const missileLimit = itemSettings.dropCubeChance + itemSettings.dropMissileChance;
     const shieldLimit = missileLimit + itemSettings.dropShieldChance;
+    const energyLimit = shieldLimit + itemSettings.dropEnergyChance;
     if (roll < itemSettings.dropCubeChance) {
       cubes.push({ x: enemy.x, y: enemy.y, radius: 13 });
     } else if (roll < missileLimit) {
       items.push({ type: "missile", x: enemy.x, y: enemy.y, radius: 16, ttl: 12 });
     } else if (roll < shieldLimit) {
       items.push({ type: "shield", x: enemy.x, y: enemy.y, radius: 16, ttl: 12 });
+    } else if (roll < energyLimit) {
+      items.push({ type: "energy", x: enemy.x, y: enemy.y, radius: 17, ttl: 12 });
     }
     addParticles(enemy.x, enemy.y, enemy.color, 12);
     playTone(680, 0.07, "triangle", 0.035);
@@ -1319,7 +1469,7 @@ function update(dt) {
     if (distance(player, cube) < player.radius + cube.radius + 8) {
       player.power += 1;
       player.maxHealth = Math.min(maxHealthForTier(currentUnit(), playerTier()) + 72, player.maxHealth + 4);
-      player.health = Math.min(player.maxHealth, player.health + 7);
+      player.health = Math.min(player.maxHealth, player.health + 18);
       score += 5;
       gainSpecial(5);
       addParticles(cube.x, cube.y, "#38bdf8", 10);
@@ -1342,11 +1492,16 @@ function update(dt) {
         gainSpecial(8);
         addParticles(item.x, item.y, "#fb923c", 18);
         playTone(980, 0.08, "square", 0.055);
-      } else {
+      } else if (item.type === "shield") {
         player.shieldTime = Math.max(player.shieldTime, 8);
         gainSpecial(8);
         addParticles(item.x, item.y, "#93c5fd", 20);
         playTone(620, 0.18, "sine", 0.055);
+      } else {
+        player.health = Math.min(player.maxHealth, player.health + Math.ceil(player.maxHealth * 0.32));
+        gainSpecial(6);
+        addParticles(item.x, item.y, "#86efac", 22);
+        playTone(740, 0.16, "triangle", 0.06);
       }
       return false;
     }
@@ -1374,7 +1529,9 @@ function endGame() {
   saveScoreButton.textContent = "Save Score";
   startPanel.hidden = true;
   gameOverPanel.hidden = false;
+  rewardPanel.hidden = true;
   gameShell.classList.add("is-ended");
+  gameShell.classList.remove("is-reward");
   renderRecords();
   playGameOverSound();
 }
@@ -1799,6 +1956,82 @@ function drawUnitBody() {
       ctx.lineWidth = 5;
       ctx.strokeRect(-20, -12, 28, 24);
     }
+  } else if (selectedUnit === "phantom") {
+    ctx.globalAlpha *= 0.9;
+    ctx.beginPath();
+    ctx.moveTo(42 + tier * 2, 0);
+    ctx.lineTo(-10, -28 - tier);
+    ctx.lineTo(-30 - tier, 0);
+    ctx.lineTo(-10, 28 + tier);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = unit.shot;
+    ctx.beginPath();
+    ctx.moveTo(-18, -20);
+    ctx.lineTo(18 + tier * 3, 0);
+    ctx.lineTo(-18, 20);
+    ctx.stroke();
+  } else if (selectedUnit === "titan") {
+    ctx.fillRect(-36 - tier, -28 - tier, 72 + tier * 2, 56 + tier * 2);
+    ctx.strokeRect(-36 - tier, -28 - tier, 72 + tier * 2, 56 + tier * 2);
+    ctx.fillStyle = "#111827";
+    ctx.fillRect(-46, -36, 22, 18);
+    ctx.fillRect(-46, 18, 22, 18);
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(8, -11, 54 + tier * 6, 22);
+  } else if (selectedUnit === "medic") {
+    ctx.beginPath();
+    ctx.arc(0, 0, player.radius + tier, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(-7, -24, 14, 48);
+    ctx.fillRect(-24, -7, 48, 14);
+    ctx.fillStyle = unit.shot;
+    ctx.fillRect(14, -7, 34 + tier * 4, 14);
+  } else if (selectedUnit === "artillery") {
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 34 + tier, 24 + tier, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#111827";
+    ctx.fillRect(-28, -30, 20, 12);
+    ctx.fillRect(-28, 18, 20, 12);
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(4, -13, 62 + tier * 6, 26);
+  } else if (selectedUnit === "blade") {
+    ctx.beginPath();
+    ctx.moveTo(46 + tier * 3, 0);
+    ctx.lineTo(-8, -18 - tier);
+    ctx.lineTo(-34 - tier, -30 - tier);
+    ctx.lineTo(-18, 0);
+    ctx.lineTo(-34 - tier, 30 + tier);
+    ctx.lineTo(-8, 18 + tier);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = unit.shot;
+    ctx.beginPath();
+    ctx.moveTo(-2, -28);
+    ctx.lineTo(30 + tier * 3, 0);
+    ctx.lineTo(-2, 28);
+    ctx.stroke();
+  } else if (selectedUnit === "nova") {
+    ctx.beginPath();
+    ctx.arc(0, 0, player.radius + tier, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = unit.shot;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, player.radius + 12, 0.25, Math.PI * 1.75);
+    ctx.stroke();
+    ctx.fillStyle = "#f8fafc";
+    ctx.beginPath();
+    ctx.arc(8, 0, 10 + tier, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(12, -5, 36 + tier * 4, 10);
   } else {
     ctx.beginPath();
     ctx.arc(0, 0, player.radius + tier, 0, Math.PI * 2);
@@ -2041,9 +2274,12 @@ function drawItem(item) {
   if (item.type === "missile") {
     ctx.fillStyle = "#fb923c";
     ctx.strokeStyle = "#ffedd5";
-  } else {
+  } else if (item.type === "shield") {
     ctx.fillStyle = "#60a5fa";
     ctx.strokeStyle = "#dbeafe";
+  } else {
+    ctx.fillStyle = "#86efac";
+    ctx.strokeStyle = "#dcfce7";
   }
 
   ctx.lineWidth = 4;
@@ -2055,7 +2291,7 @@ function drawItem(item) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.font = "900 22px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
-  ctx.fillText(item.type === "missile" ? "M" : "S", item.x, item.y + 1);
+  ctx.fillText(item.type === "missile" ? "M" : item.type === "shield" ? "S" : "E", item.x, item.y + 1);
 }
 
 function drawParticle(particle) {
