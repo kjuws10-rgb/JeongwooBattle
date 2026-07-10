@@ -14,6 +14,8 @@ On iPhone Safari, use Share -> Add to Home Screen to run it like an app.
 - The unit selection screen shows strength, speed, defense, durability, power, and special skill details
 - Each unit has distinct combat tuning for attack, movement, defense, health, and starting power
 - Units visually upgrade as score tiers increase
+- Unit health pools are tuned higher, and power cubes can raise each unit's max health further
+- Basic shots and missile visuals upgrade by score tier with stronger color, size, speed, and damage
 - Left joystick moves, right button shoots, and the yellow SP button uses a charged special skill
 - A yellow special gauge sits under the health bar and fills from kills and pickups
 - The top HUD area is blocked off inside the arena
@@ -22,6 +24,7 @@ On iPhone Safari, use Share -> Add to Home Screen to run it like an app.
 - Item field spawns and enemy drops use lower probability tuning so rewards are less crowded
 - The map changes at higher scores: Grass, Desert, Ice, Space, Nebula, and Core
 - A boss appears before each new map and must be cleared to unlock the next stage
+- Boss fights clear regular enemies, then scale boss health, contact damage, projectile damage, and bullet patterns by stage
 - Enemies include chasers, sprinters, brutes, shooters, orbiters, and bosses
 - Enemies keep distance from the player instead of stacking on top of the unit
 - Higher levels add varied obstacle shapes, jump pads, teleport portals, and moving obstacles

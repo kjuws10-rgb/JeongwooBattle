@@ -32,43 +32,43 @@ const keys = new Set();
 const storageKey = "jeongwoo-battle-records-v1";
 const units = {
   tank: {
-    label: "Tank", role: "Balanced armor with steady firepower", radius: 32, speed: 300, maxHealth: 130, fireDelay: 0.3, color: "#38bdf8", shot: "#fde047",
-    attack: 1.08, defense: 0.88, startPower: 1, stats: { strength: 7, speed: 4, defense: 7, durability: 7, power: 6 },
+    label: "Tank", role: "Balanced armor with steady firepower", radius: 32, speed: 300, maxHealth: 165, fireDelay: 0.3, color: "#38bdf8", shot: "#fde047",
+    attack: 1.08, defense: 0.88, startPower: 1, stats: { strength: 7, speed: 4, defense: 7, durability: 8, power: 6 },
     specialName: "Iron Barrage", specialDescription: "Gains a shield and fires a heavy missile circle.", special: "barrage"
   },
   jet: {
-    label: "Jet", role: "Fast striker with fragile armor", radius: 25, speed: 410, maxHealth: 82, fireDelay: 0.22, color: "#f97316", shot: "#fdba74",
-    attack: 1.12, defense: 1.12, startPower: 1, stats: { strength: 6, speed: 9, defense: 3, durability: 3, power: 7 },
+    label: "Jet", role: "Fast striker with fragile armor", radius: 25, speed: 410, maxHealth: 112, fireDelay: 0.22, color: "#f97316", shot: "#fdba74",
+    attack: 1.12, defense: 1.12, startPower: 1, stats: { strength: 6, speed: 9, defense: 3, durability: 4, power: 7 },
     specialName: "Afterburner", specialDescription: "Boosts speed and releases a forward fire fan.", special: "afterburner"
   },
   rover: {
-    label: "Rover", role: "Support unit with recovery and stable handling", radius: 28, speed: 360, maxHealth: 105, fireDelay: 0.24, color: "#22c55e", shot: "#bbf7d0",
-    attack: 0.95, defense: 0.94, startPower: 2, stats: { strength: 5, speed: 6, defense: 6, durability: 6, power: 5 },
+    label: "Rover", role: "Support unit with recovery and stable handling", radius: 28, speed: 360, maxHealth: 140, fireDelay: 0.24, color: "#22c55e", shot: "#bbf7d0",
+    attack: 0.95, defense: 0.94, startPower: 2, stats: { strength: 5, speed: 6, defense: 6, durability: 7, power: 5 },
     specialName: "Repair Field", specialDescription: "Restores health, raises power, and adds short protection.", special: "repair"
   },
   ship: {
-    label: "Ship", role: "Heavy saucer with strong survival stats", radius: 34, speed: 280, maxHealth: 150, fireDelay: 0.34, color: "#a855f7", shot: "#e9d5ff",
-    attack: 1.02, defense: 0.82, startPower: 1, stats: { strength: 6, speed: 3, defense: 8, durability: 8, power: 6 },
+    label: "Ship", role: "Heavy saucer with strong survival stats", radius: 34, speed: 280, maxHealth: 190, fireDelay: 0.34, color: "#a855f7", shot: "#e9d5ff",
+    attack: 1.02, defense: 0.82, startPower: 1, stats: { strength: 6, speed: 3, defense: 8, durability: 9, power: 6 },
     specialName: "Gravity Wave", specialDescription: "Damages nearby enemies and pushes danger away.", special: "gravity"
   },
   mech: {
-    label: "Mech", role: "Slow assault frame with the highest toughness", radius: 35, speed: 285, maxHealth: 170, fireDelay: 0.36, color: "#f43f5e", shot: "#fecdd3",
+    label: "Mech", role: "Slow assault frame with the highest toughness", radius: 35, speed: 285, maxHealth: 220, fireDelay: 0.36, color: "#f43f5e", shot: "#fecdd3",
     attack: 1.25, defense: 0.78, startPower: 1, stats: { strength: 9, speed: 3, defense: 9, durability: 10, power: 8 },
     specialName: "Heavy Salvo", specialDescription: "Launches powerful missiles in every direction.", special: "salvo"
   },
   drone: {
-    label: "Drone", role: "Tiny high-tech unit with fast special charging", radius: 23, speed: 430, maxHealth: 78, fireDelay: 0.2, color: "#14b8a6", shot: "#99f6e4",
-    attack: 0.92, defense: 1.16, startPower: 2, stats: { strength: 4, speed: 9, defense: 3, durability: 3, power: 9 },
+    label: "Drone", role: "Tiny high-tech unit with fast special charging", radius: 23, speed: 430, maxHealth: 105, fireDelay: 0.2, color: "#14b8a6", shot: "#99f6e4",
+    attack: 0.92, defense: 1.16, startPower: 2, stats: { strength: 4, speed: 9, defense: 3, durability: 4, power: 9 },
     specialName: "Swarm Burst", specialDescription: "Releases rapid shots around the drone.", special: "swarm", specialGain: 1.18
   },
   speeder: {
-    label: "Speeder", role: "Extreme mobility with risky low durability", radius: 24, speed: 465, maxHealth: 72, fireDelay: 0.26, color: "#eab308", shot: "#fef08a",
-    attack: 1.0, defense: 1.2, startPower: 1, stats: { strength: 5, speed: 10, defense: 2, durability: 2, power: 6 },
+    label: "Speeder", role: "Extreme mobility with risky low durability", radius: 24, speed: 465, maxHealth: 98, fireDelay: 0.26, color: "#eab308", shot: "#fef08a",
+    attack: 1.0, defense: 1.2, startPower: 1, stats: { strength: 5, speed: 10, defense: 2, durability: 3, power: 6 },
     specialName: "Time Dash", specialDescription: "Becomes briefly invulnerable and clears enemy bullets.", special: "dash"
   },
   walker: {
-    label: "Walker", role: "Defensive walker with strong close-range control", radius: 33, speed: 310, maxHealth: 145, fireDelay: 0.29, color: "#64748b", shot: "#cbd5e1",
-    attack: 1.04, defense: 0.8, startPower: 1, stats: { strength: 6, speed: 4, defense: 9, durability: 8, power: 5 },
+    label: "Walker", role: "Defensive walker with strong close-range control", radius: 33, speed: 310, maxHealth: 185, fireDelay: 0.29, color: "#64748b", shot: "#cbd5e1",
+    attack: 1.04, defense: 0.8, startPower: 1, stats: { strength: 6, speed: 4, defense: 9, durability: 9, power: 5 },
     specialName: "Guard Stomp", specialDescription: "Creates a shockwave, shields the unit, and heals slightly.", special: "stomp"
   }
 };
@@ -80,6 +80,8 @@ const statLabels = {
   power: "파워"
 };
 const specialMax = 100;
+const shotTierColors = ["#fde047", "#fef08a", "#86efac", "#67e8f9", "#c4b5fd", "#f9a8d4", "#ffffff"];
+const missileTierColors = ["#fb923c", "#fdba74", "#facc15", "#38bdf8", "#a78bfa", "#f472b6", "#ffffff"];
 const itemSettings = {
   fieldSpawnBase: 13,
   fieldSpawnVariance: 8,
@@ -369,9 +371,14 @@ function gainSpecial(amount) {
   player.specialCharge = Math.min(specialMax, player.specialCharge + amount * bonus);
 }
 
+function tierColor(colors) {
+  return colors[Math.min(colors.length - 1, playerTier() - 1)];
+}
+
 function fireRadialShots(count, speed, damage, radius, missile = false) {
   if (gameState !== "playing" || gameOver) return;
 
+  const tier = playerTier();
   for (let i = 0; i < count; i += 1) {
     const angle = (Math.PI * 2 * i) / count;
     bullets.push({
@@ -382,7 +389,8 @@ function fireRadialShots(count, speed, damage, radius, missile = false) {
       radius,
       damage: attackDamage(damage),
       life: missile ? 1.35 : 0.9,
-      color: currentUnit().shot,
+      color: missile ? tierColor(missileTierColors) : tierColor(shotTierColors),
+      tier,
       missile
     });
   }
@@ -590,22 +598,29 @@ function updateMapByScore() {
 function spawnBoss(targetMapIndex) {
   bossActive = true;
   bossTargetMapIndex = targetMapIndex;
-  enemies = enemies.filter((enemy) => enemy.boss);
+  enemies = [];
   enemyBullets = [];
   const targetMap = maps[targetMapIndex];
+  const bossLevel = targetMapIndex + 1;
+  const bossHealth = 92 + bossLevel * 58 + playerTier() * 16;
   enemies.push({
     type: "boss",
     boss: true,
+    bossLevel,
     x: world.width / 2,
     y: arenaTop + 170,
-    radius: 58 + targetMapIndex * 4,
-    health: 38 + targetMapIndex * 16,
-    maxHealth: 38 + targetMapIndex * 16,
-    speed: 72 + targetMapIndex * 5,
+    radius: 62 + targetMapIndex * 6,
+    health: bossHealth,
+    maxHealth: bossHealth,
+    speed: 78 + targetMapIndex * 8,
     color: targetMap.edge,
-    stopDistance: 210,
-    scoreValue: 80 + targetMapIndex * 35,
-    shootCooldown: 1.2,
+    stopDistance: 225,
+    scoreValue: 100 + targetMapIndex * 55,
+    shootCooldown: 0.85,
+    bulletDamage: 14 + targetMapIndex * 4,
+    bulletSpeed: 330 + targetMapIndex * 36,
+    contactDamage: 22 + targetMapIndex * 7,
+    volley: 3 + Math.floor(targetMapIndex / 2),
     pulse: 0
   });
   addParticles(world.width / 2, arenaTop + 170, targetMap.edge, 64);
@@ -739,7 +754,7 @@ function bulletHitsObstacle(bullet) {
 }
 
 function spawnEnemy() {
-  if (bossActive && enemies.some((enemy) => enemy.boss) && Math.random() < 0.55) return;
+  if (bossActive && enemies.some((enemy) => enemy.boss)) return;
 
   const side = Math.floor(Math.random() * 4);
   const margin = 80;
@@ -819,8 +834,17 @@ function updateEnemy(enemy, dt) {
     enemy.shootCooldown -= dt;
     if (enemy.shootCooldown <= 0 && dist < 620) {
       if (enemy.boss) {
-        for (let i = -1; i <= 1; i += 1) shootEnemyBullet(enemy, angle + i * 0.22, 300 + currentMapIndex * 25, 10, 12);
-        enemy.shootCooldown = Math.max(0.65, 1.25 - currentMapIndex * 0.08);
+        const level = enemy.bossLevel || currentMapIndex + 1;
+        const volley = enemy.volley || 3;
+        const center = (volley - 1) / 2;
+        for (let i = 0; i < volley; i += 1) {
+          shootEnemyBullet(enemy, angle + (i - center) * 0.18, enemy.bulletSpeed, 10 + Math.floor(level / 2), enemy.bulletDamage);
+        }
+        if (level >= 4) {
+          shootEnemyBullet(enemy, angle + Math.PI * 0.5, enemy.bulletSpeed * 0.86, 9, Math.max(12, enemy.bulletDamage - 3));
+          shootEnemyBullet(enemy, angle - Math.PI * 0.5, enemy.bulletSpeed * 0.86, 9, Math.max(12, enemy.bulletDamage - 3));
+        }
+        enemy.shootCooldown = Math.max(0.44, 1.05 - level * 0.08);
       } else {
         shootEnemyBullet(enemy, angle, 330, 8, 9);
         enemy.shootCooldown = 1.2 + Math.random() * 0.7;
@@ -940,9 +964,12 @@ function startMusic() {
 function shoot() {
   if (bulletTimer > 0 || gameState !== "playing" || gameOver) return;
 
+  const tier = playerTier();
   bulletTimer = Math.max(0.1, currentUnit().fireDelay - player.power * 0.018);
   const spread = Math.min(3, Math.floor(player.power / 3));
-  const damage = attackDamage(1 + Math.floor(player.power / 4));
+  const damage = attackDamage(1 + Math.floor(player.power / 4) + Math.floor((tier - 1) / 3));
+  const shotSpeed = 760 + tier * 24;
+  const shotRadius = 8 + Math.floor((tier - 1) / 2);
   playTone(420, 0.06, "square", 0.04);
 
   for (let i = -spread; i <= spread; i += 1) {
@@ -950,12 +977,13 @@ function shoot() {
     bullets.push({
       x: player.x + Math.cos(angle) * 34,
       y: player.y + Math.sin(angle) * 34,
-      vx: Math.cos(angle) * 760,
-      vy: Math.sin(angle) * 760,
-      radius: 8,
+      vx: Math.cos(angle) * shotSpeed,
+      vy: Math.sin(angle) * shotSpeed,
+      radius: shotRadius,
       damage,
-      life: 0.8,
-      color: currentUnit().shot
+      life: 0.82 + tier * 0.035,
+      color: tierColor(shotTierColors),
+      tier
     });
   }
 
@@ -964,11 +992,13 @@ function shoot() {
     bullets.push({
       x: player.x + Math.cos(player.angle) * 42,
       y: player.y + Math.sin(player.angle) * 42,
-      vx: Math.cos(player.angle) * 560,
-      vy: Math.sin(player.angle) * 560,
-      radius: 15,
-      damage: attackDamage(5 + Math.floor(player.power / 2)),
-      life: 1.3,
+      vx: Math.cos(player.angle) * (560 + tier * 26),
+      vy: Math.sin(player.angle) * (560 + tier * 26),
+      radius: 15 + Math.floor(tier / 2),
+      damage: attackDamage(5 + Math.floor(player.power / 2) + Math.floor(tier / 2)),
+      life: 1.35 + tier * 0.05,
+      color: tierColor(missileTierColors),
+      tier,
       missile: true
     });
     playTone(110, 0.18, "sawtooth", 0.08);
@@ -1139,7 +1169,7 @@ function update(dt) {
         addParticles(enemy.x, enemy.y, "#93c5fd", 12);
         playTone(520, 0.08, "sine", 0.05);
       } else {
-        takeDamage(enemy.boss ? 18 : 10);
+        takeDamage(enemy.boss ? enemy.contactDamage || 22 : 10);
         playTone(140, 0.13, "sawtooth", 0.08);
       }
       player.invulnerable = 0.55;
@@ -1151,7 +1181,7 @@ function update(dt) {
   cubes = cubes.filter((cube) => {
     if (distance(player, cube) < player.radius + cube.radius + 8) {
       player.power += 1;
-      player.maxHealth = Math.min(currentUnit().maxHealth + 24, player.maxHealth + 2);
+      player.maxHealth = Math.min(currentUnit().maxHealth + 36, player.maxHealth + 2);
       player.health = Math.min(player.maxHealth, player.health + 7);
       score += 5;
       gainSpecial(5);
@@ -1727,15 +1757,60 @@ function drawEnemyBullet(bullet) {
 }
 
 function drawBullet(bullet) {
-  ctx.fillStyle = bullet.missile ? "#fb923c" : bullet.color || "#fde047";
-  ctx.beginPath();
-  ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
-  ctx.fill();
+  const tier = bullet.tier || 1;
+  ctx.save();
+  ctx.translate(bullet.x, bullet.y);
+  ctx.rotate(Math.atan2(bullet.vy, bullet.vx));
+
   if (bullet.missile) {
+    ctx.fillStyle = bullet.color || tierColor(missileTierColors);
     ctx.strokeStyle = "#fed7aa";
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 3 + Math.min(3, Math.floor(tier / 2));
+    ctx.beginPath();
+    ctx.moveTo(bullet.radius + 8 + tier, 0);
+    ctx.lineTo(-bullet.radius, -bullet.radius * 0.62);
+    ctx.lineTo(-bullet.radius * 0.72, 0);
+    ctx.lineTo(-bullet.radius, bullet.radius * 0.62);
+    ctx.closePath();
+    ctx.fill();
     ctx.stroke();
+
+    ctx.fillStyle = tier >= 4 ? "#fef08a" : "#fee2e2";
+    ctx.beginPath();
+    ctx.moveTo(-bullet.radius - 2, 0);
+    ctx.lineTo(-bullet.radius - 14 - tier * 2, -6 - tier);
+    ctx.lineTo(-bullet.radius - 10 - tier, 0);
+    ctx.lineTo(-bullet.radius - 14 - tier * 2, 6 + tier);
+    ctx.closePath();
+    ctx.fill();
+  } else if (tier >= 5) {
+    ctx.fillStyle = bullet.color || tierColor(shotTierColors);
+    ctx.strokeStyle = "#f8fafc";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(bullet.radius + 8, 0);
+    ctx.lineTo(0, -bullet.radius);
+    ctx.lineTo(-bullet.radius - 5, 0);
+    ctx.lineTo(0, bullet.radius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.globalAlpha = 0.36;
+    ctx.beginPath();
+    ctx.arc(0, 0, bullet.radius + 9, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = bullet.color || tierColor(shotTierColors);
+    ctx.beginPath();
+    ctx.arc(0, 0, bullet.radius, 0, Math.PI * 2);
+    ctx.fill();
+    if (tier >= 3) {
+      ctx.strokeStyle = "#f8fafc";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
   }
+  ctx.restore();
 }
 
 function drawCube(cube) {
