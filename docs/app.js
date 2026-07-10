@@ -31,8 +31,6 @@ const specialDescription = document.querySelector("#specialDescription");
 const world = { width: 900, height: 1500 };
 const arenaTop = 176;
 const maxStage = 100;
-const stageScoreStep = 320;
-const bossStageInterval = 10;
 const input = { x: 0, y: 0, shooting: false };
 const keys = new Set();
 const storageKey = "jeongwoo-battle-records-v1";
@@ -210,6 +208,22 @@ const maps = [
     ]
   },
   {
+    name: "바다",
+    minScore: 0,
+    bg: "#0f766e",
+    grid: "rgba(153,246,228,0.14)",
+    block: "#164e63",
+    edge: "#99f6e4",
+    obstacles: [
+      { x: 120, y: 240, w: 190, h: 70, shape: "round" },
+      { x: 590, y: 260, w: 190, h: 70, shape: "round" },
+      { x: 360, y: 520, w: 180, h: 180, shape: "diamond" },
+      { x: 95, y: 850, w: 250, h: 78 },
+      { x: 565, y: 940, w: 230, h: 78 },
+      { x: 330, y: 1210, w: 240, h: 90, shape: "cross" }
+    ]
+  },
+  {
     name: "사막",
     minScore: 650,
     bg: "#92400e",
@@ -305,6 +319,8 @@ let bulletTimer = 0;
 let itemTimer = 4;
 let score = 0;
 let wave = 1;
+let currentStage = 1;
+let stageStartScore = 0;
 let gameOver = false;
 let gameState = "menu";
 let currentMapIndex = 0;
@@ -380,6 +396,8 @@ function resetRoundState() {
   particles = [];
   score = 0;
   wave = 1;
+  currentStage = 1;
+  stageStartScore = 0;
   spawnTimer = 0;
   bulletTimer = 0;
   itemTimer = 4;
@@ -422,7 +440,8 @@ function startGame() {
 
 function updateHud() {
   scoreEl.textContent = score;
-  waveEl.textContent = bossActive ? `보스 ${bossTargetStage || playerTier()}단계` : `${currentMap().name} ${playerTier()}/${maxStage}단계`;
+  const stageLabel = `${currentMap().name} ${currentStage}/${maxStage}단계`;
+  waveEl.textContent = bossActive ? `${stageLabel} 보스` : `${stageLabel} 목표 ${stageProgressText()}`;
   const missileType = player.missiles > 0 ? ` ${missileLabel(missileKindForTier(weaponTierValue())).slice(0, 3).toUpperCase()}` : "";
   powerEl.textContent = `파워${player.power} 미사일${player.missiles}${missileType} 보호${Math.ceil(player.shieldTime)}`;
   healthBar.style.width = `${Math.max(0, (player.health / player.maxHealth) * 100)}%`;
@@ -471,19 +490,19 @@ function currentUnit() {
 }
 
 function maxHealthForTier(unit, tier) {
-  return Math.round(unit.maxHealth * 2 + unit.maxHealth * 0.2 * (tier - 1));
+  return Math.round(unit.maxHealth * 2 + unit.maxHealth * 0.045 * (tier - 1));
 }
 
 function tierAttackMultiplier() {
-  return 1 + (playerTier() - 1) * 0.07;
+  return 1 + (playerTier() - 1) * 0.025;
 }
 
 function tierDefenseMultiplier() {
-  return Math.max(0.72, 1 - (playerTier() - 1) * 0.04);
+  return Math.max(0.86, 1 - (playerTier() - 1) * 0.0015);
 }
 
 function tierSpeedMultiplier() {
-  return 1 + (playerTier() - 1) * 0.025;
+  return Math.min(1.65, 1 + (playerTier() - 1) * 0.006);
 }
 
 function attackDamage(base) {
@@ -685,7 +704,7 @@ function currentObstacles() {
 }
 
 function playerTier() {
-  return clamp(1 + Math.floor(score / stageScoreStep), 1, maxStage);
+  return currentStage;
 }
 
 function visualTierValue() {
@@ -697,40 +716,52 @@ function weaponTierValue() {
 }
 
 function mapIndexForStage(stage) {
-  return clamp(Math.floor((stage - 1) / 17), 0, maps.length - 1);
+  return (clamp(stage, 1, maxStage) - 1) % maps.length;
 }
 
 function stageDifficulty() {
   return playerTier();
 }
 
+function scoreNeededForStage(stage) {
+  return 260 + stage * 42 + Math.floor(stage * stage * 0.85);
+}
+
+function stageProgressText() {
+  const needed = scoreNeededForStage(currentStage);
+  const progress = clamp(score - stageStartScore, 0, needed);
+  return `${progress}/${needed}`;
+}
+
 function rebuildDynamicTerrain() {
   const map = currentMap();
+  const stage = playerTier();
   const level = Math.max(currentMapIndex + 1, visualTierValue());
+  const offset = (stage * 37) % 170;
   dynamicObjects = [];
 
-  dynamicObjects.push({ type: "jump", x: 385, y: 390 + level * 34, w: 130, h: 64, color: map.edge });
+  dynamicObjects.push({ type: "jump", x: 335 + (offset % 110), y: 390 + level * 25, w: 130, h: 64, color: map.edge });
 
   if (level >= 2) {
-    dynamicObjects.push({ type: "moving", blocks: true, baseX: 115, baseY: 680, w: 170, h: 58, amp: 90, speed: 1.1, phase: 0.4, color: map.block });
-    dynamicObjects.push({ type: "jump", x: 610, y: 960, w: 145, h: 64, color: "#fb923c" });
+    dynamicObjects.push({ type: "moving", blocks: true, baseX: 100 + (offset % 80), baseY: 680, w: 170, h: 58, amp: 70 + level * 4, speed: 1.0 + level * 0.03, phase: stage * 0.11, color: map.block });
+    dynamicObjects.push({ type: "jump", x: 560 + (offset % 70), y: 940 + (stage % 5) * 18, w: 145, h: 64, color: "#fb923c" });
   }
 
   if (level >= 3) {
-    dynamicObjects.push({ type: "portal", id: "a", x: 165, y: 560, radius: 34, targetId: "b", color: "#67e8f9" });
-    dynamicObjects.push({ type: "portal", id: "b", x: 735, y: 1120, radius: 34, targetId: "a", color: "#c084fc" });
-    dynamicObjects.push({ type: "moving", blocks: true, baseX: 590, baseY: 520, w: 120, h: 120, amp: 110, speed: 1.35, phase: 1.2, color: map.block });
+    dynamicObjects.push({ type: "portal", id: "a", x: 150 + (offset % 70), y: 560, radius: 34, targetId: "b", color: "#67e8f9" });
+    dynamicObjects.push({ type: "portal", id: "b", x: 700 - (offset % 70), y: 1100 + (stage % 4) * 18, radius: 34, targetId: "a", color: "#c084fc" });
+    dynamicObjects.push({ type: "moving", blocks: true, baseX: 570 - (offset % 55), baseY: 520, w: 120, h: 120, amp: 90 + level * 5, speed: 1.18 + level * 0.035, phase: stage * 0.17, color: map.block });
   }
 
   if (level >= 4) {
-    dynamicObjects.push({ type: "portal", id: "c", x: 735, y: 360, radius: 30, targetId: "d", color: "#f0abfc" });
-    dynamicObjects.push({ type: "portal", id: "d", x: 165, y: 1260, radius: 30, targetId: "c", color: "#7dd3fc" });
-    dynamicObjects.push({ type: "moving", blocks: true, baseX: 330, baseY: 820, w: 240, h: 62, amp: 150, speed: 1.55, phase: 2.1, color: map.block });
+    dynamicObjects.push({ type: "portal", id: "c", x: 710 - (offset % 90), y: 360 + (stage % 3) * 35, radius: 30, targetId: "d", color: "#f0abfc" });
+    dynamicObjects.push({ type: "portal", id: "d", x: 150 + (offset % 90), y: 1240 - (stage % 3) * 30, radius: 30, targetId: "c", color: "#7dd3fc" });
+    dynamicObjects.push({ type: "moving", blocks: true, baseX: 310 + (offset % 90), baseY: 820, w: 220, h: 62, amp: 115 + level * 6, speed: 1.28 + level * 0.04, phase: stage * 0.23, color: map.block });
   }
 
   if (level >= 5) {
-    dynamicObjects.push({ type: "jump", x: 140, y: 1040, w: 130, h: 66, color: "#86efac" });
-    dynamicObjects.push({ type: "moving", blocks: true, baseX: 120, baseY: 1180, w: 180, h: 54, amp: 210, speed: 1.85, phase: 2.8, color: map.block });
+    dynamicObjects.push({ type: "jump", x: 120 + (offset % 120), y: 1020 + (stage % 6) * 18, w: 130, h: 66, color: "#86efac" });
+    dynamicObjects.push({ type: "moving", blocks: true, baseX: 110 + (offset % 90), baseY: 1180, w: 180, h: 54, amp: 140 + level * 8, speed: 1.42 + level * 0.045, phase: stage * 0.29, color: map.block });
   }
 }
 
@@ -789,27 +820,9 @@ function updateTerrainEffects(dt) {
 }
 
 function updateMapByScore() {
-  const nextTier = playerTier();
-  if (nextTier > visualTier) {
-    visualTier = nextTier;
-    applyPlayerTierUpgrade(nextTier);
-    rebuildDynamicTerrain();
-    addParticles(player.x, player.y, units[selectedUnit].shot, 42);
-    playTone(520 + nextTier * 70, 0.18, "triangle", 0.08);
-  }
-
   if (rewardPending || bossActive) return;
-
-  const nextMapIndex = mapIndexForStage(nextTier);
-  if (nextMapIndex > unlockedMapIndex) {
-    spawnBoss(nextMapIndex, nextTier, true);
-    return;
-  }
-
-  const nextBossStage = Math.floor(nextTier / bossStageInterval) * bossStageInterval;
-  if (nextBossStage >= bossStageInterval && nextBossStage > clearedBossStage) {
-    spawnBoss(currentMapIndex, nextBossStage, false);
-  }
+  if (currentStage >= maxStage && clearedBossStage >= maxStage) return;
+  if (score - stageStartScore >= scoreNeededForStage(currentStage)) spawnBoss(currentMapIndex, currentStage, false);
 }
 
 function applyPlayerTierUpgrade(tier) {
@@ -817,11 +830,11 @@ function applyPlayerTierUpgrade(tier) {
   if (targetMaxHealth > player.maxHealth) {
     const gain = targetMaxHealth - player.maxHealth;
     player.maxHealth = targetMaxHealth;
-    player.health = Math.min(player.maxHealth, player.health + Math.ceil(gain * 0.82));
+    player.health = Math.min(player.maxHealth, player.health + Math.ceil(gain * 0.42));
   }
 
-  player.power += 1;
-  gainSpecial(12);
+  if (tier % 3 === 0) player.power += 1;
+  gainSpecial(5);
 }
 
 function spawnBoss(targetMapIndex, targetStage = playerTier(), unlockMap = true) {
@@ -862,13 +875,22 @@ function spawnBoss(targetMapIndex, targetStage = playerTier(), unlockMap = true)
 function clearBoss(enemy) {
   if (!enemy.boss) return;
 
-  if (bossTargetMapIndex != null) {
-    unlockedMapIndex = bossTargetMapIndex;
-    currentMapIndex = unlockedMapIndex;
+  const clearedStage = bossTargetStage || currentStage;
+  clearedBossStage = Math.max(clearedBossStage, clearedStage);
+
+  if (currentStage < maxStage) {
+    currentStage = Math.min(maxStage, clearedStage + 1);
+    stageStartScore = score;
+    currentMapIndex = mapIndexForStage(currentStage);
+    unlockedMapIndex = Math.max(unlockedMapIndex, currentMapIndex);
+    if (currentStage > visualTier) {
+      visualTier = currentStage;
+      applyPlayerTierUpgrade(currentStage);
+    }
+  } else {
+    stageStartScore = score;
   }
-  if (bossTargetStage != null) {
-    clearedBossStage = Math.max(clearedBossStage, bossTargetStage);
-  }
+
   bossTargetMapIndex = null;
   bossTargetStage = null;
   bossActive = false;
@@ -1555,7 +1577,7 @@ function update(dt) {
     return true;
   });
 
-  wave = 1 + Math.floor(score / 120);
+  wave = currentStage + Math.floor(Math.max(0, score - stageStartScore) / 140);
 
   particles.forEach((particle) => {
     particle.x += particle.vx * dt;
