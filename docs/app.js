@@ -257,8 +257,8 @@ function resetRoundState() {
   player.y = world.height / 2;
   player.radius = unit.radius;
   player.speed = unit.speed;
-  player.maxHealth = unit.maxHealth;
-  player.health = unit.maxHealth;
+  player.maxHealth = maxHealthForTier(unit, 1);
+  player.health = player.maxHealth;
   player.power = unit.startPower || 1;
   player.missiles = 0;
   player.shieldTime = 0;
@@ -326,7 +326,7 @@ function updateHud() {
 function updateUnitPreview() {
   const unit = units[unitSelect.value] || units.tank;
   unitName.textContent = unit.label;
-  unitRole.textContent = unit.role;
+  unitRole.textContent = `${unit.role} / Energy ${maxHealthForTier(unit, 1)}`;
   specialName.textContent = unit.specialName;
   specialDescription.textContent = unit.specialDescription;
   specialButton.title = `${unit.specialName} charging`;
@@ -359,12 +359,28 @@ function currentUnit() {
   return units[selectedUnit] || units.tank;
 }
 
+function maxHealthForTier(unit, tier) {
+  return Math.round(unit.maxHealth * 2 + unit.maxHealth * 0.2 * (tier - 1));
+}
+
+function tierAttackMultiplier() {
+  return 1 + (playerTier() - 1) * 0.07;
+}
+
+function tierDefenseMultiplier() {
+  return Math.max(0.72, 1 - (playerTier() - 1) * 0.04);
+}
+
+function tierSpeedMultiplier() {
+  return 1 + (playerTier() - 1) * 0.025;
+}
+
 function attackDamage(base) {
-  return Math.max(1, Math.round(base * currentUnit().attack));
+  return Math.max(1, Math.round(base * currentUnit().attack * tierAttackMultiplier()));
 }
 
 function takeDamage(amount) {
-  player.health -= Math.max(1, Math.round(amount * currentUnit().defense));
+  player.health -= Math.max(1, Math.round(amount * currentUnit().defense * tierDefenseMultiplier()));
 }
 
 function gainSpecial(amount) {
@@ -649,6 +665,7 @@ function updateMapByScore() {
   const nextTier = playerTier();
   if (nextTier > visualTier) {
     visualTier = nextTier;
+    applyPlayerTierUpgrade(nextTier);
     rebuildDynamicTerrain();
     addParticles(player.x, player.y, units[selectedUnit].shot, 42);
     playTone(520 + nextTier * 70, 0.18, "triangle", 0.08);
@@ -658,6 +675,18 @@ function updateMapByScore() {
   if (!bossActive && nextMapIndex < maps.length && score >= maps[nextMapIndex].minScore) {
     spawnBoss(nextMapIndex);
   }
+}
+
+function applyPlayerTierUpgrade(tier) {
+  const targetMaxHealth = maxHealthForTier(currentUnit(), tier);
+  if (targetMaxHealth > player.maxHealth) {
+    const gain = targetMaxHealth - player.maxHealth;
+    player.maxHealth = targetMaxHealth;
+    player.health = Math.min(player.maxHealth, player.health + Math.ceil(gain * 0.82));
+  }
+
+  player.power += 1;
+  gainSpecial(12);
 }
 
 function spawnBoss(targetMapIndex) {
@@ -1156,7 +1185,7 @@ function update(dt) {
     player.angle = Math.atan2(moveY, moveX);
   }
 
-  const speedBoost = player.boostTime > 0 ? 1.18 : 1;
+  const speedBoost = (player.boostTime > 0 ? 1.18 : 1) * tierSpeedMultiplier();
   player.x += moveX * player.speed * speedBoost * dt;
   player.y += moveY * player.speed * speedBoost * dt;
   clampToArena(player);
@@ -1289,7 +1318,7 @@ function update(dt) {
   cubes = cubes.filter((cube) => {
     if (distance(player, cube) < player.radius + cube.radius + 8) {
       player.power += 1;
-      player.maxHealth = Math.min(currentUnit().maxHealth + 36, player.maxHealth + 2);
+      player.maxHealth = Math.min(maxHealthForTier(currentUnit(), playerTier()) + 72, player.maxHealth + 4);
       player.health = Math.min(player.maxHealth, player.health + 7);
       score += 5;
       gainSpecial(5);

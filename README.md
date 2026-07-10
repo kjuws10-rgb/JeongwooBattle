@@ -14,7 +14,8 @@ On iPhone Safari, use Share -> Add to Home Screen to run it like an app.
 - The unit selection screen shows strength, speed, defense, durability, power, and special skill details
 - Each unit has distinct combat tuning for attack, movement, defense, health, and starting power
 - Units visually upgrade as score tiers increase
-- Unit health pools are tuned higher, and power cubes can raise each unit's max health further
+- Unit health pools start at 2x base energy, and power cubes can raise each unit's max health further
+- Every visual upgrade tier also increases max energy, attack scaling, defense efficiency, movement speed, power, and special charge
 - Basic shots and missile visuals upgrade by score tier with stronger color, size, speed, and damage
 - Missile upgrades add weapon variants such as laser shots, boomerang missiles, homing missiles, and gas rounds
 - Left joystick moves, right button shoots, and the yellow SP button uses a charged special skill
